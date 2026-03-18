@@ -27,3 +27,4 @@ yarn-error.log
 /.vscode
 /.zed
 resources/js/pages/welcome-old.tsx
+resources/js/pages/lp-welcome.tsx
