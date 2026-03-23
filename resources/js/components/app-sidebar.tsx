@@ -1,5 +1,17 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-react';
+import {
+    LayoutGrid,
+    BookOpen,
+    FolderGit2,
+    FolderGit,
+    Package,
+    Truck,
+    ArrowUpCircle,
+    ArrowDownCircle,
+    ShoppingCart,
+    /* Settings,
+    HelpCircle, */
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -15,20 +27,51 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
+import { route } from 'ziggy-js';
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: route('dashboard'), //dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Produk',
+        href: route('products.index'),
+        icon: Package,
+    },
+    {
+        title: 'Supply',
+        href: route('supply.index'),
+        icon: Truck,
+    },
+    {
+        title: 'Pengeluaran',
+        href: route('expenses.index'),
+        icon: ArrowDownCircle,
+    },
+    {
+        title: 'Pemasukan',
+        href: route('income.index'),
+        icon: ArrowUpCircle,
+    },
+    {
+        title: 'Penjualan',
+        href: route('sales.index'),
+        icon: ShoppingCart,
     },
 ];
 
 const footerNavItems: NavItem[] = [
     {
         title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
+        href: 'https://github.com/Rankard07/pos-koemau',
         icon: FolderGit2,
+    },
+    {
+        title: 'Laravel Repository',
+        href: 'https://github.com/laravel/react-starter-kit',
+        icon: FolderGit,
     },
     {
         title: 'Documentation',
