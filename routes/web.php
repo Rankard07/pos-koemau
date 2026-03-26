@@ -24,7 +24,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('/penjualan', 'penjualan')->name('sales.index'); */
 
     // Route::resource routes untuk CRUD otomatis menjadi seperti products.index, products.create, dll.
-    Route::resource('products', ProductController::class);
+    Route::resource(
+        'products',
+        ProductController::class,
+        ['names' => [
+            'index' => 'products.index',
+            'create' => 'products.create',
+            'store' => 'products.store',
+            'edit' => 'products.edit',
+            'update' => 'products.update',
+            'destroy' => 'products.destroy',
+        ]]
+    );
     Route::resource('supply', SupplyController::class);
     Route::resource('expenses', ExpenseController::class);
     Route::resource('income', IncomeController::class);

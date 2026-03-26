@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     protected $fillable = [
-        'name',
-        'buy_price',
-        'sell_price',
-        'stock',
-        'product_image'
+        'name',           // Tetap sama
+        'purchase_price', // Sebelumnya 'buy_price'
+        'selling_price',  // Sebelumnya 'sell_price'
+        'stock',          // Tetap sama
+        'image'           // Sebelumnya 'product_image'
     ];
 }

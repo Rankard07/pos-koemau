@@ -1,14 +1,45 @@
 import { Head, Link } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout'; // Pastikan path ini sesuai dengan starter kit kamu
+import type { BreadcrumbItem } from '@/types';
 import { route } from 'ziggy-js';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Produk',
+        href: route('products.index'),
+    },
+];
+
+export interface Product {
+    id: number;
+    name: string;
+    purchase_price: number; // Sesuaikan dengan database/model
+    selling_price: number; // Sesuaikan dengan database/model
+    stock: number;
+    image: string | null; // Sesuaikan dengan database/model
+}
 
 interface ProdukProps {
     title: string;
+    products: Product[];
 }
 
-export default function Produk({ title }: ProdukProps) {
+export default function Index({ title, products }: ProdukProps) {
+    /* const { products }: { products: Product[] } = usePage().props; // Ambil data produk dari props Inertia
+
+    interface Product {
+        id: number;
+        name: string;
+        buy_price: number;
+        sell_price: number;
+        stock: number;
+        product_image: string;
+    }
+ */
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             {/* 1. Menampilkan title di Tab Browser */}
             <Head title={title} />
 
@@ -23,14 +54,22 @@ export default function Produk({ title }: ProdukProps) {
                             Kelola semua stok frozen food KoeMau di sini.
                         </p>
                     </div>
-
                     {/* Tombol aksi (contoh) */}
-                    <Link
-                        href={route('products.create')}
-                        className="rounded-md bg-orange-500 px-4 py-2 text-white transition hover:bg-orange-600"
+
+                    <Button
+                        asChild
+                        variant="koemau"
+                        // className="rounded-md bg-orange-500 px-4 py-2 text-white transition hover:bg-orange-600"
                     >
-                        Tambah Produk
-                    </Link>
+                        <Link
+                            href={route('products.create')}
+                            // href="/products/create"
+                            // className="rounded-md bg-orange-500 px-4 py-2 text-white transition hover:bg-orange-600"
+                        >
+                            <Plus className="mr-1 h-4 w-4" />
+                            Tambah Produk
+                        </Link>
+                    </Button>
                 </div>
 
                 <hr className="my-6 border-border" />
@@ -41,6 +80,16 @@ export default function Produk({ title }: ProdukProps) {
                         Daftar produk akan muncul di sini setelah kita buat
                         tabelnya.
                     </p>
+                    <ul>
+                        {products.map((product: Product) => (
+                            <li key={product.id}>
+                                {product.name}
+                                <Link href={route('products.edit', product.id)}>
+                                    Edit
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             </div>
         </AppLayout>

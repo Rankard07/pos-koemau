@@ -16,7 +16,8 @@ class ProductController extends Controller
     {
         // Memanggil file 'resources/js/Pages/produk.tsx'
         return inertia('products/index', [
-            'title' => 'Daftar Produk KoeMau'
+            'title' => 'Daftar Produk KoeMau',
+            'products' => Product::all(), // Mengirim data ke React
         ]);
     }
 
@@ -51,10 +52,10 @@ class ProductController extends Controller
 
         Product::create([
             'name' => $request->name,
-            'buy_price' => $request->buy_price,
-            'sell_price' => $request->sell_price,
+            'purchase_price' => $request->buy_price, // Masukkan request 'buy_price' ke kolom 'purchase_price'
+            'selling_price' => $request->sell_price, // Masukkan request 'sell_price' ke kolom 'selling_price'
             'stock' => $request->stock,
-            'product_image' => $file_path,
+            'image' => $file_path,                   // Masukkan path ke kolom 'image'
         ]);
 
         return redirect()->route('products.index');
