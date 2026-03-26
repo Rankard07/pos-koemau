@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use Inertia\Inertia;
 
 
 class ProductController extends Controller
@@ -15,7 +16,7 @@ class ProductController extends Controller
     public function index()
     {
         // Memanggil file 'resources/js/Pages/produk.tsx'
-        return inertia('products/index', [
+        return Inertia::render('products/index', [
             'title' => 'Daftar Produk KoeMau',
             'products' => Product::all(), // Mengirim data ke React
         ]);
@@ -26,9 +27,9 @@ class ProductController extends Controller
      */
     public function create()
     {
-        return inertia('products/create', [
+        return Inertia::render('products/create', [
             'title' => 'Tambah Produk Baru',
-            'products' => Product::all(), // Mengirim data ke React
+            // 'products' => Product::all(), // Biasanya tidak diperlukan di halaman 'create' kecuali untuk pilihan kategori
         ]);
     }
 
@@ -37,26 +38,19 @@ class ProductController extends Controller
      */
     public function store(StoreProductRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'buy_price' => 'required|numeric',
-            'sell_price' => 'required|numeric',
+        $validated = $request->validate([
+            'product_name' => 'required|string|max:255',
+            'purchase_price' => 'required|numeric',
+            'selling_price' => 'required|numeric',
             'stock' => 'required|integer',
-            'product_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $file_path = null;
-        if ($request->hasFile('product_image')) {
-            $file_path = $request->file('product_image')->store('products', 'public');
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
-        Product::create([
-            'name' => $request->name,
-            'purchase_price' => $request->buy_price, // Masukkan request 'buy_price' ke kolom 'purchase_price'
-            'selling_price' => $request->sell_price, // Masukkan request 'sell_price' ke kolom 'selling_price'
-            'stock' => $request->stock,
-            'image' => $file_path,                   // Masukkan path ke kolom 'image'
-        ]);
+        Product::create($validated);
 
         return redirect()->route('products.index');
     }

@@ -65,6 +65,7 @@ export default function Index({ title, products }: ProdukProps) {
                             href={route('products.create')}
                             // href="/products/create"
                             // className="rounded-md bg-orange-500 px-4 py-2 text-white transition hover:bg-orange-600"
+                            prefetch
                         >
                             <Plus className="mr-1 h-4 w-4" />
                             Tambah Produk
