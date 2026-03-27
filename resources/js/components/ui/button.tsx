@@ -4,7 +4,7 @@ import { Slot } from "@radix-ui/react-slot"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-4xl border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-4xl border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:scale-102 active:scale-97 duration-200",
   {
     variants: {
       variant: {
@@ -19,6 +19,25 @@ const buttonVariants = cva(
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
         koemau: "bg-orange-500 text-white hover:bg-orange-600 shadow-none border-none",
+            // DaisyUI Variants
+       // --- VARIAN GAYA DAISYUI ---
+        daisyPrimary: "bg-[#570af2] text-white hover:bg-[#4506cb] border-transparent",
+        daisySecondary: "bg-[#f000b8] text-white hover:bg-[#c40096] border-transparent",
+        daisyAccent: "bg-[#37cdbe] text-[#1f2937] hover:bg-[#2aa79b] border-transparent",
+        daisySuccess: "bg-[#00a96e] text-white hover:bg-[#008c5b] border-transparent shadow-sm",
+        daisyWarning: "bg-[#ffbe00] text-[#1f2937] hover:bg-[#e6ab00] border-transparent",
+        daisyInfo: "bg-[#00b5ff] text-white hover:bg-[#0096d6] border-transparent",
+        daisyError: "bg-[#ff5861] text-white hover:bg-[#e64f57] border-transparent",
+        daisyGhost: "hover:bg-current/10 bg-transparent text-current border-transparent",
+
+        // Varian Outline ala DaisyUI
+        "daisy-outline-success": "border-[#00a96e] text-[#00a96e] bg-transparent hover:bg-[#00a96e] hover:text-white border-2",
+        "daisy-outline-warning": "border-[#ffbe00] text-[#ffbe00] bg-transparent hover:bg-[#ffbe00] hover:text-white border-2",
+        "daisy-outline-info": "border-[#00b5ff] text-[#00b5ff] bg-transparent hover:bg-[#00b5ff] hover:text-white border-2",
+        "daisy-outline-error": "border-[#ff5861] text-[#ff5861] bg-transparent hover:bg-[#ff5861] hover:text-white border-2",
+
+
+
       },
       size: {
         default:

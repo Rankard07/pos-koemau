@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -6,7 +7,9 @@ import {
     FieldContent,
     FieldGroup,
     FieldLabel,
+    FieldSeparator,
 } from '@/components/ui/field';
+import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { route } from 'ziggy-js';
@@ -32,11 +35,30 @@ interface CreateProps {
     { images }: ImagePreview,
 ) */
 export default function Create({ title, images = [] }: CreateProps) {
+    const { data, setData, post, processing, errors } = useForm<{
+        product_name: string;
+        purchase_price: number;
+        selling_price: number;
+        stock: number;
+        product_image: File | null;
+    }>({
+        product_name: '',
+        purchase_price: 0,
+        selling_price: 0,
+        stock: 0,
+        product_image: null as File | null,
+    });
+
+    const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        post(route('products.store'));
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={title} />
             <div className="px-4 py-6">
-                <form action="">
+                <form action="" onSubmit={handleSubmit}>
                     <div className="flex flex-row items-center justify-between">
                         <label className="text-2xl font-semibold">
                             {title}
@@ -52,8 +74,8 @@ export default function Create({ title, images = [] }: CreateProps) {
                                 // className="rounded-md bg-orange-500 px-4 py-2 text-white transition hover:bg-orange-600"
                                 prefetch
                             >
-                                <Plus className="mr-1 h-4 w-4" />
-                                KEmbali ke Daftar Produk
+                                {/* <Plus className="mr-1 h-4 w-4" /> */}
+                                Kembali ke Daftar Produk
                             </Link>
                         </Button>
                     </div>
@@ -65,57 +87,118 @@ export default function Create({ title, images = [] }: CreateProps) {
                     <FieldGroup className="mt-6 grid grid-cols-1 gap-8 rounded-xl border bg-card p-6 md:grid-cols-2">
                         {/* KOLOM KIRI: Data Produk */}
                         <div className="space-y-4">
-                            <Field>
-                                <FieldLabel htmlFor="product_name">
-                                    Nama Produk
-                                </FieldLabel>
-                                <FieldContent>
-                                    <input
-                                        id="product_name"
-                                        type="text"
-                                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                        placeholder="Nama Produk"
-                                    />
-                                </FieldContent>
-                            </Field>
-
-                            <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                {/* Nama Produk */}
                                 <Field>
-                                    <FieldLabel htmlFor="purchase_price">
-                                        Harga Beli
+                                    <FieldLabel htmlFor="product_name">
+                                        Nama Produk
                                     </FieldLabel>
                                     <FieldContent>
                                         <input
-                                            id="purchase_price"
-                                            type="number"
-                                            className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                            id="product_name"
+                                            type="text"
+                                            className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                            placeholder="Nama Produk"
+                                            value={data.product_name}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'product_name',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            required
                                         />
+                                        {errors.product_name && (
+                                            <p className="mt-1 text-xs text-destructive">
+                                                {errors.product_name}
+                                            </p>
+                                        )}
                                     </FieldContent>
                                 </Field>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Field>
+                                        <FieldLabel htmlFor="purchase_price">
+                                            Harga Beli
+                                        </FieldLabel>
+                                        <FieldContent>
+                                            <input
+                                                id="purchase_price"
+                                                type="number"
+                                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                                placeholder="Harga Beli"
+                                                value={data.purchase_price}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'purchase_price',
+                                                        Number(e.target.value),
+                                                    )
+                                                }
+                                                required
+                                            />
+                                            {errors.purchase_price && (
+                                                <p className="mt-1 text-xs text-destructive">
+                                                    {errors.purchase_price}
+                                                </p>
+                                            )}
+                                        </FieldContent>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel htmlFor="selling_price">
+                                            Harga Jual
+                                        </FieldLabel>
+                                        <FieldContent>
+                                            <input
+                                                id="selling_price"
+                                                type="number"
+                                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                                placeholder="Harga Jual"
+                                                value={data.selling_price}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'selling_price',
+                                                        Number(e.target.value),
+                                                    )
+                                                }
+                                                required
+                                            />
+                                            {errors.selling_price && (
+                                                <p className="mt-1 text-xs text-destructive">
+                                                    {errors.selling_price}
+                                                </p>
+                                            )}
+                                        </FieldContent>
+                                    </Field>
+                                </div>
+
                                 <Field>
-                                    <FieldLabel htmlFor="selling_price">
-                                        Harga Jual
+                                    <FieldLabel htmlFor="stock">
+                                        Stok
                                     </FieldLabel>
                                     <FieldContent>
                                         <input
-                                            id="selling_price"
+                                            id="stock"
                                             type="number"
-                                            className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                         />
                                     </FieldContent>
                                 </Field>
                             </div>
 
-                            <Field>
-                                <FieldLabel htmlFor="stock">Stok</FieldLabel>
-                                <FieldContent>
-                                    <input
-                                        id="stock"
-                                        type="number"
-                                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                    />
-                                </FieldContent>
-                            </Field>
+                            {/* Tombol Simpan Produk */}
+                            <div className="col-span-1 flex justify-center border-t pt-4 md:col-span-2">
+                                <Field className="w-full max-w-sm">
+                                    <FieldContent>
+                                        <Button
+                                            type="submit"
+                                            variant="daisySuccess" // Menggunakan varian success yang sudah kita buat tadi
+                                            className="w-full"
+                                        >
+                                            Simpan Produk
+                                        </Button>
+                                    </FieldContent>
+                                </Field>
+                            </div>
                         </div>
 
                         {/* KOLOM KANAN: Upload Gambar */}
@@ -127,6 +210,7 @@ export default function Create({ title, images = [] }: CreateProps) {
                                 >
                                     Gambar Produk
                                 </FieldLabel>
+
                                 <FieldContent>
                                     {/* Area Preview Gambar bisa diletakkan di sini nanti */}
                                     <div className="mb-4 flex aspect-square w-full max-w-[200px] items-center justify-center rounded bg-muted">
@@ -134,13 +218,28 @@ export default function Create({ title, images = [] }: CreateProps) {
                                             Preview Gambar
                                         </span>
                                     </div>
-                                    <input
-                                        id="product_image"
-                                        type="file"
-                                        accept="image/jpeg,image/jpg,image/png,image/webp"
-                                        className="w-full cursor-pointer rounded-4xl border-2 text-sm transition-all file:mr-4 file:rounded-full file:border-0 file:bg-orange-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-orange-700"
-                                        multiple
-                                    />
+                                    <FieldContent>
+                                        <div>
+                                            {/* Pilih gambar */}
+                                            <Label
+                                                htmlFor="product_image"
+                                                className="pointer-events-none text-sm text-muted-foreground"
+                                            >
+                                                Pilih Gambar
+                                            </Label>
+                                        </div>
+                                        <FieldSeparator></FieldSeparator>
+                                        <div>
+                                            {/* Input File untuk memilih gambar */}
+                                            <input
+                                                id="product_image"
+                                                type="file"
+                                                accept="image/jpeg,image/jpg,image/png,image/webp"
+                                                className="w-full cursor-pointer rounded-4xl border-2 text-sm transition-all file:mr-4 file:rounded-full file:border-0 file:bg-orange-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-orange-700"
+                                                multiple
+                                            />
+                                        </div>
+                                    </FieldContent>
                                 </FieldContent>
                             </Field>
                         </div>
