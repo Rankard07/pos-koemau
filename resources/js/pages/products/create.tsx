@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
-import { useForm, usePage } from '@inertiajs/react';
-import { Loader, Loader2Icon, Plus } from 'lucide-react';
+import { useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,7 +8,6 @@ import {
     FieldContent,
     FieldGroup,
     FieldLabel,
-    FieldSeparator,
 } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
@@ -22,33 +21,106 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-interface CreateProps {
-    title: string;
-    images?: string[]; // Gunakan tanda tanya (?) karena data ini opsional/belum dikirim dari controller
+interface ImageOption {
+    path: string;
+    name: string;
 }
 
-/* interface ImagePreview {
-    images: string[];
-} */
+interface AvailableImages {
+    [folder: string]: ImageOption[];
+}
 
-/* export default function Create(
-    { title }: CreateProps,
-    { images }: ImagePreview,
-) */
-export default function Create({ title, images = [] }: CreateProps) {
+interface CreateProps {
+    title: string;
+    availableImages?: AvailableImages; // Images grouped by folder
+}
+
+export default function Create({ title, availableImages = {} }: CreateProps) {
+    const [previewUrl, setPreviewUrl] = useState<string>('');
+    const [fileError, setFileError] = useState<string>('');
+
     const { data, setData, post, processing, errors } = useForm<{
         product_name: string;
-        purchase_price: number;
-        selling_price: number;
-        stock: number;
-        product_image: File | null;
+        purchase_price: number | '';
+        selling_price: number | '';
+        stock: number | '';
+        image: File | null;
+        image_file: string;
     }>({
         product_name: '',
         purchase_price: 0,
         selling_price: 0,
         stock: 0,
-        product_image: null as File | null,
+        image: null,
+        image_file: '',
     });
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+
+        setFileError('');
+
+        if (!file) {
+            setPreviewUrl('');
+            setData('image', null);
+
+            return;
+        }
+
+        // Validate file type
+        const allowedTypes = [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/webp',
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            setFileError('Format gambar harus: JPG, PNG, atau WebP');
+            setPreviewUrl('');
+            setData('image', null);
+
+            return;
+        }
+
+        // Validate file size (max 2MB)
+        const maxSize = 2 * 1024 * 1024; // 2MB
+
+        if (file.size > maxSize) {
+            setFileError('Ukuran gambar maksimal 2MB');
+            setPreviewUrl('');
+            setData('image', null);
+
+            return;
+        }
+
+        // Create preview URL
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setPreviewUrl(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+
+        // Set form data
+        setData('image', file);
+        setData('image_file', ''); // Clear preset selection when upload new
+    };
+
+    const handlePresetImageChange = (
+        e: React.ChangeEvent<HTMLSelectElement>,
+    ) => {
+        const imagePath = e.target.value;
+        setData('image_file', imagePath);
+
+        if (imagePath) {
+            // Clear file input and show public/images preview path
+            setData('image', null);
+            setPreviewUrl(`/images/${imagePath}`);
+            setFileError('');
+        } else {
+            setPreviewUrl('');
+        }
+    };
 
     const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -117,7 +189,7 @@ export default function Create({ title, images = [] }: CreateProps) {
                                     </FieldContent>
                                 </Field>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="mt-3 grid grid-cols-2 gap-4">
                                     <Field>
                                         <FieldLabel htmlFor="purchase_price">
                                             Harga Beli
@@ -129,12 +201,16 @@ export default function Create({ title, images = [] }: CreateProps) {
                                                 className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                                 placeholder="Harga Beli"
                                                 value={data.purchase_price}
-                                                onChange={(e) =>
+                                                onChange={(e) => {
+                                                    const value =
+                                                        e.target.value;
                                                     setData(
                                                         'purchase_price',
-                                                        Number(e.target.value),
-                                                    )
-                                                }
+                                                        value === ''
+                                                            ? ''
+                                                            : Number(value),
+                                                    );
+                                                }}
                                                 required
                                             />
                                             {errors.purchase_price && (
@@ -155,12 +231,16 @@ export default function Create({ title, images = [] }: CreateProps) {
                                                 className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                                 placeholder="Harga Jual"
                                                 value={data.selling_price}
-                                                onChange={(e) =>
+                                                onChange={(e) => {
+                                                    const value =
+                                                        e.target.value;
                                                     setData(
                                                         'selling_price',
-                                                        Number(e.target.value),
-                                                    )
-                                                }
+                                                        value === ''
+                                                            ? ''
+                                                            : Number(value),
+                                                    );
+                                                }}
                                                 required
                                             />
                                             {errors.selling_price && (
@@ -172,7 +252,7 @@ export default function Create({ title, images = [] }: CreateProps) {
                                     </Field>
                                 </div>
 
-                                <Field>
+                                <Field className="mt-3">
                                     <FieldLabel htmlFor="stock">
                                         Stok
                                     </FieldLabel>
@@ -181,32 +261,50 @@ export default function Create({ title, images = [] }: CreateProps) {
                                             id="stock"
                                             type="number"
                                             className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                            placeholder="Stok"
+                                            value={data.stock}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                setData(
+                                                    'stock',
+                                                    value === ''
+                                                        ? ''
+                                                        : Number(value),
+                                                );
+                                            }}
+                                            required
                                         />
+                                        {errors.stock && (
+                                            <p className="mt-1 text-xs text-destructive">
+                                                {errors.stock}
+                                            </p>
+                                        )}
                                     </FieldContent>
                                 </Field>
                             </div>
 
                             {/* Tombol Simpan Produk */}
-                            <div className="col-span-1 flex justify-center border-t pt-4 md:col-span-2">
+                            <div className="flex justify-center border-t pt-4 md:col-span-2">
                                 <Field className="w-full max-w-sm">
                                     <FieldContent>
-                                        <Loader />
-                                        <Loader2Icon />
                                         <Button
                                             type="submit"
-                                            variant="daisySuccess" // Menggunakan varian success yang sudah kita buat tadi
+                                            variant="daisySuccess"
                                             className="w-full"
                                             disabled={processing}
                                         >
                                             {processing ? (
-                                                <LoadingSpinner
-                                                    size={20}
-                                                    color="#fff"
-                                                />
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <LoadingSpinner
+                                                        size={20}
+                                                        color="#fff"
+                                                    />
+                                                    <span>Menyimpan...</span>
+                                                </div>
                                             ) : (
-                                                'Menyimpan...'
+                                                // Teks ini HANYA muncul jika NOT processing
+                                                'Simpan Produk'
                                             )}
-                                            Simpan Produk
                                         </Button>
                                     </FieldContent>
                                 </Field>
@@ -214,45 +312,114 @@ export default function Create({ title, images = [] }: CreateProps) {
                         </div>
 
                         {/* KOLOM KANAN: Upload Gambar */}
-                        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6">
-                            <Field className="w-full">
-                                <FieldLabel
-                                    className="mb-4 text-center"
-                                    htmlFor="product_image"
-                                >
+                        <div className="space-y-4">
+                            {/* IMAGE PREVIEW SECTION */}
+                            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-500 p-6 text-center">
+                                <Label className="mb-3 block text-sm font-semibold">
+                                    Gambar Saat Ini
+                                </Label>
+                                {previewUrl ? (
+                                    <img
+                                        src={previewUrl}
+                                        alt="Preview"
+                                        className="mx-auto mb-2 h-40 w-40 rounded-lg object-cover"
+                                    />
+                                ) : (
+                                    <div className="mx-auto mb-2 flex h-40 w-40 items-center justify-center rounded-lg bg-gray-200">
+                                        <span className="text-sm text-gray-400">
+                                            Belum ada gambar dipilih
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* IMAGE SELECTION SECTION */}
+                            <Field>
+                                <FieldLabel className="text-base font-semibold">
                                     Gambar Produk
                                 </FieldLabel>
 
-                                <FieldContent>
-                                    {/* Area Preview Gambar bisa diletakkan di sini nanti */}
-                                    <div className="mb-4 flex aspect-square w-full max-w-[200px] items-center justify-center rounded bg-muted">
-                                        <span className="text-xs text-muted-foreground">
-                                            Preview Gambar
+                                {/* PRESET IMAGES SELECTOR */}
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium text-gray-700">
+                                        Pilih dari Folder (public/images):
+                                    </Label>
+                                    <select
+                                        value={data.image_file}
+                                        onChange={handlePresetImageChange}
+                                        className="w-full rounded-md border border-input bg-orange-500 px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                                    >
+                                        <option value="">
+                                            -- Tidak Memilih --
+                                        </option>
+                                        {Object.entries(availableImages).map(
+                                            ([folder, images]) => (
+                                                <optgroup
+                                                    key={folder}
+                                                    label={folder}
+                                                >
+                                                    {images.map((img) => (
+                                                        <option
+                                                            key={img.path}
+                                                            value={img.path}
+                                                        >
+                                                            {img.name}
+                                                        </option>
+                                                    ))}
+                                                </optgroup>
+                                            ),
+                                        )}
+                                    </select>
+                                    {Object.keys(availableImages).length ===
+                                        0 && (
+                                        <p className="text-xs text-gray-500">
+                                            Tidak ada gambar di public/images
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* DIVIDER */}
+                                <div className="relative my-4">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <div className="w-full border-t border-gray-300"></div>
+                                    </div>
+                                    <div className="relative flex justify-center text-sm">
+                                        <span className="bg-white px-2 text-gray-500">
+                                            ATAU
                                         </span>
                                     </div>
+                                </div>
+
+                                {/* FILE UPLOAD SECTION */}
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium text-gray-700">
+                                        Upload Gambar Baru:
+                                    </Label>
                                     <FieldContent>
-                                        <div>
-                                            {/* Pilih gambar */}
-                                            <Label
-                                                htmlFor="product_image"
-                                                className="pointer-events-none text-sm text-muted-foreground"
-                                            >
-                                                Pilih Gambar
-                                            </Label>
-                                        </div>
-                                        <FieldSeparator></FieldSeparator>
-                                        <div>
-                                            {/* Input File untuk memilih gambar */}
-                                            <input
-                                                id="product_image"
-                                                type="file"
-                                                accept="image/jpeg,image/jpg,image/png,image/webp"
-                                                className="w-full cursor-pointer rounded-4xl border-2 text-sm transition-all file:mr-4 file:rounded-full file:border-0 file:bg-orange-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-orange-700"
-                                                multiple
-                                            />
-                                        </div>
+                                        <input
+                                            id="image"
+                                            name="image"
+                                            type="file"
+                                            accept="image/jpeg,image/jpg,image/png,image/webp"
+                                            onChange={handleFileChange}
+                                            className="w-full cursor-pointer rounded-md border-2 border-dashed border-gray-300 px-3 py-3 text-sm transition-all file:mr-2 file:rounded-md file:border-0 file:bg-orange-600 file:px-3 file:py-1 file:text-sm file:font-semibold file:text-white hover:file:bg-orange-700"
+                                        />
                                     </FieldContent>
-                                </FieldContent>
+                                    {errors.image && (
+                                        <p className="text-xs text-destructive">
+                                            {errors.image}
+                                        </p>
+                                    )}
+                                    {fileError && (
+                                        <p className="text-xs text-destructive">
+                                            {fileError}
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-gray-500">
+                                        Format: JPG, PNG, WebP · Ukuran
+                                        maksimal: 2MB
+                                    </p>
+                                </div>
                             </Field>
                         </div>
                     </FieldGroup>
