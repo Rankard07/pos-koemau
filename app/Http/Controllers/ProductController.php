@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\File;
 
 
 class ProductController extends Controller
@@ -27,6 +28,24 @@ class ProductController extends Controller
      */
     public function create()
     {
+        // 1. Siapkan array kosong untuk menampung nama gambar
+        $imagesList = [];
+        $imagePath = public_path('images');
+
+        // 2. Cek apakah direktori 'images' ada
+        if (File::exists($imagePath)) {
+            // 3. Ambil semua file dalam direktori 'images'
+            $files = File::files($imagePath);
+            // atau jika menggunakan Storage facade:
+            // $files = Storage::files('public/images');
+
+            // 4. Loop melalui setiap file dan ambil nama filenya
+            foreach ($files as $file) {
+                $imagesList[] = $file->getRelativePathname();
+            }
+        }
+
+
         return Inertia::render('products/create', [
             'title' => 'Tambah Produk Baru',
             // 'products' => Product::all(), // Biasanya tidak diperlukan di halaman 'create' kecuali untuk pilihan kategori

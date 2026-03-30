@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useForm, usePage } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { Loader, Loader2Icon, Plus } from 'lucide-react';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import {
     Field,
@@ -189,11 +190,22 @@ export default function Create({ title, images = [] }: CreateProps) {
                             <div className="col-span-1 flex justify-center border-t pt-4 md:col-span-2">
                                 <Field className="w-full max-w-sm">
                                     <FieldContent>
+                                        <Loader />
+                                        <Loader2Icon />
                                         <Button
                                             type="submit"
                                             variant="daisySuccess" // Menggunakan varian success yang sudah kita buat tadi
                                             className="w-full"
+                                            disabled={processing}
                                         >
+                                            {processing ? (
+                                                <LoadingSpinner
+                                                    size={20}
+                                                    color="#fff"
+                                                />
+                                            ) : (
+                                                'Menyimpan...'
+                                            )}
                                             Simpan Produk
                                         </Button>
                                     </FieldContent>
