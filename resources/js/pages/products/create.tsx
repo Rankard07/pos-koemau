@@ -16,8 +16,12 @@ import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Produk Baru',
+        title: 'Tambah Produk',
         href: route('products.create'),
+    },
+    {
+        title: 'Daftar Produk',
+        href: route('products.index'),
     },
 ];
 
@@ -136,18 +140,8 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                         <label className="text-2xl font-semibold">
                             {title}
                         </label>
-                        <Button
-                            asChild
-                            variant="koemau"
-                            // className="rounded-md bg-orange-500 px-4 py-2 text-white transition hover:bg-orange-600"
-                        >
-                            <Link
-                                href={route('products.index')}
-                                // href="/products/create"
-                                // className="rounded-md bg-orange-500 px-4 py-2 text-white transition hover:bg-orange-600"
-                                prefetch
-                            >
-                                {/* <Plus className="mr-1 h-4 w-4" /> */}
+                        <Button asChild variant="customWarning">
+                            <Link href={route('products.index')} prefetch>
                                 Kembali ke Daftar Produk
                             </Link>
                         </Button>
@@ -201,6 +195,9 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                                                 className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                                 placeholder="Harga Beli"
                                                 value={data.purchase_price}
+                                                onFocus={(e) =>
+                                                    e.target.select()
+                                                }
                                                 onChange={(e) => {
                                                     const value =
                                                         e.target.value;
@@ -231,6 +228,9 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                                                 className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                                 placeholder="Harga Jual"
                                                 value={data.selling_price}
+                                                onFocus={(e) =>
+                                                    e.target.select()
+                                                }
                                                 onChange={(e) => {
                                                     const value =
                                                         e.target.value;
@@ -263,6 +263,7 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                                             className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                             placeholder="Stok"
                                             value={data.stock}
+                                            onFocus={(e) => e.target.select()}
                                             onChange={(e) => {
                                                 const value = e.target.value;
                                                 setData(
@@ -314,7 +315,7 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                         {/* KOLOM KANAN: Upload Gambar */}
                         <div className="space-y-4">
                             {/* IMAGE PREVIEW SECTION */}
-                            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-500 p-6 text-center">
+                            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-500 p-3 text-center">
                                 <Label className="mb-3 block text-sm font-semibold">
                                     Gambar Saat Ini
                                 </Label>
@@ -322,7 +323,7 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                                     <img
                                         src={previewUrl}
                                         alt="Preview"
-                                        className="mx-auto mb-2 h-40 w-40 rounded-lg object-cover"
+                                        className="mx-auto mb-2 h-80 w-80 rounded-lg object-cover"
                                     />
                                 ) : (
                                     <div className="mx-auto mb-2 flex h-40 w-40 items-center justify-center rounded-lg bg-gray-200">

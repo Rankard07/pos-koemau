@@ -156,7 +156,7 @@ export default function Edit({
                         <label className="text-2xl font-semibold">
                             {title}
                         </label>
-                        <Button asChild variant="koemau">
+                        <Button asChild variant="customWarning">
                             <Link href={route('products.index')} prefetch>
                                 Kembali ke Daftar Produk
                             </Link>
@@ -210,6 +210,9 @@ export default function Edit({
                                                 className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                                 placeholder="Harga Beli"
                                                 value={data.purchase_price}
+                                                onFocus={(e) =>
+                                                    e.target.select()
+                                                }
                                                 onChange={(e) => {
                                                     const value =
                                                         e.target.value;
@@ -240,6 +243,9 @@ export default function Edit({
                                                 className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                                 placeholder="Harga Jual"
                                                 value={data.selling_price}
+                                                onFocus={(e) =>
+                                                    e.target.select()
+                                                }
                                                 onChange={(e) => {
                                                     const value =
                                                         e.target.value;
@@ -272,6 +278,7 @@ export default function Edit({
                                             className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                             placeholder="Stok"
                                             value={data.stock}
+                                            onFocus={(e) => e.target.select()}
                                             onChange={(e) => {
                                                 const value = e.target.value;
                                                 setData(
@@ -322,7 +329,7 @@ export default function Edit({
                         {/* KOLOM KANAN: Upload Gambar */}
                         <div className="space-y-4">
                             {/* IMAGE PREVIEW SECTION */}
-                            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-500 p-6 text-center">
+                            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-500 p-3 text-center">
                                 <Label className="mb-3 block text-sm font-semibold">
                                     Gambar Saat Ini
                                 </Label>
