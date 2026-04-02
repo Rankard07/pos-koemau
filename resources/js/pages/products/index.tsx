@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Zap, History } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
@@ -69,12 +69,27 @@ export default function Index({ title, products }: IndexProps) {
                         </p>
                     </div>
 
-                    <Button asChild variant="koemau">
-                        <Link href={route('products.create')} prefetch>
-                            <Plus className="mr-1 h-4 w-4" />
-                            Tambah Produk
-                        </Link>
-                    </Button>
+                    {/* Action Buttons */}
+                    <div className="flex flex-row items-center justify-center gap-4 align-middle">
+                        <Button asChild variant="koemau">
+                            <Link href={route('products.create')} prefetch>
+                                <Plus className="mr-1 h-4 w-4" />
+                                Tambah Produk
+                            </Link>
+                        </Button>
+
+                        <Button
+                            variant="customSpecial"
+                            asChild
+                            size="sm"
+                            className="gap-2"
+                        >
+                            <Link href={route('product-split.index')} prefetch>
+                                <History className="h-4 w-4" />
+                                <span>History Pecah Produk</span>
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 <hr className="my-6 border-border" />
@@ -189,6 +204,30 @@ export default function Index({ title, products }: IndexProps) {
                                                         Edit
                                                     </Link>
                                                 </Button>
+
+                                                {/* Pecah Produk Button */}
+                                                {product.stock > 0 && (
+                                                    <Button
+                                                        asChild
+                                                        size="sm"
+                                                        variant="customSpecial"
+                                                        className="gap-1"
+                                                    >
+                                                        <Link
+                                                            href={route(
+                                                                'product-split.create',
+                                                                {
+                                                                    product_id:
+                                                                        product.id,
+                                                                },
+                                                            )}
+                                                            prefetch
+                                                        >
+                                                            <Zap className="h-4 w-4" />
+                                                            Pecah
+                                                        </Link>
+                                                    </Button>
+                                                )}
 
                                                 {/* Delete Button */}
                                                 <Button

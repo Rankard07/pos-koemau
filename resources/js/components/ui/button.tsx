@@ -41,6 +41,7 @@ const buttonVariants = cva(
             customSuccess: "bg-green-600 text-white hover:bg-green-700 border-none shadow-md",
             customWarning: "bg-yellow-600 text-white hover:bg-yellow-700 border-none shadow-md",
             customInfo: "bg-blue-600 text-white hover:bg-blue-700 border-none shadow-md",
+            customSpecial: "bg-purple-600 text-white hover:bg-purple-700 border-none shadow-md",
 
 
       },

@@ -16,12 +16,12 @@ import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Tambah Produk',
-        href: route('products.create'),
-    },
-    {
         title: 'Daftar Produk',
         href: route('products.index'),
+    },
+    {
+        title: 'Tambah Produk',
+        href: route('products.create'),
     },
 ];
 

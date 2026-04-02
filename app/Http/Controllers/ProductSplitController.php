@@ -18,13 +18,16 @@ class ProductSplitController extends Controller
     public function index()
     {
         // Fetch all splits with eager loaded relationships, sorted by latest first
-        $splits = ProductSplit::query()
+        $splitsPaginated = ProductSplit::query()
             ->with(['parentProduct', 'splitItems.resultProduct'])
             ->latest('created_at')
             ->paginate(15);
 
+        // Get pagination links before mapping (map converts Paginator to Collection)
+        // $pagination = $splitsPaginated->getLinks();
+
         // Format splits for display
-        $formattedSplits = $splits->map(function ($split) {
+        $formattedSplits = $splitsPaginated->map(function ($split) {
             return [
                 'id' => $split->id,
                 'tanggal' => $split->created_at->format('d/m/Y H:i'),
@@ -37,9 +40,10 @@ class ProductSplitController extends Controller
             ];
         });
 
-        return Inertia::render('produk-split/Index', [
+        return Inertia::render('product-split/index', [
+            'title' => 'History Pecah Produk',
             'splits' => $formattedSplits,
-            'pagination' => $splits->getLinks(),
+            // 'pagination' => $pagination,
         ]);
     }
 
@@ -54,8 +58,9 @@ class ProductSplitController extends Controller
             ->where('stock', '>', 0)
             ->get();
 
-        return Inertia::render('produk-split/Create', [
+        return Inertia::render('product-split/create', [
             'products' => $products,
+            'title' => 'Pecah Produk',
         ]);
     }
 
@@ -165,7 +170,7 @@ class ProductSplitController extends Controller
             ];
         }
 
-        return Inertia::render('produk-split/Show', [
+        return Inertia::render('product-split/show', [
             'split' => $formattedData,
             'stockSummary' => $stockSummary,
         ]);

@@ -32,13 +32,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     ] */);
 
     // Pecah Produk (Product Split)
-    /* Route::get('produk-split', [ProductSplitController::class, 'index'])->name('product-split.index');
-    Route::get('produk-split/create', [ProductSplitController::class, 'create'])->name('product-split.create');
-    Route::post('produk-split', [ProductSplitController::class, 'store'])->name('product-split.store');
-    Route::get('produk-split/{productSplit}', [ProductSplitController::class, 'show'])->name('product-split.show'); */
+    Route::get('product-split', [ProductSplitController::class, 'index'])->name('product-split.index');
+    Route::get('product-split/create', [ProductSplitController::class, 'create'])->name('product-split.create');
+    Route::post('product-split', [ProductSplitController::class, 'store'])->name('product-split.store');
+    Route::get('product-split/{productSplit}', [ProductSplitController::class, 'show'])->name('product-split.show');
 
     // Pecah Produk (Product Split) - Jauh lebih ringkas
-    Route::resource('product-split', ProductSplitController::class)->only(['index', 'create', 'store', 'show']);
+    // Route::resource('product-split', ProductSplitController::class)->only(['index', 'create', 'store', 'show']);
 
     // Penjualan — kasir + riwayat
     /* Route::get('sales', [SaleController::class, 'index'])->name('sales.index');
