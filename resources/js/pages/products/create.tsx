@@ -1,3 +1,4 @@
+// resources/js/pages/products/create.tsx
 import { Head, Link } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
@@ -15,14 +16,8 @@ import type { BreadcrumbItem } from '@/types';
 import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Daftar Produk',
-        href: route('products.index'),
-    },
-    {
-        title: 'Tambah Produk',
-        href: route('products.create'),
-    },
+    { title: 'Daftar Produk', href: route('products.index') },
+    { title: 'Tambah Produk', href: route('products.create') },
 ];
 
 interface ImageOption {
@@ -36,7 +31,19 @@ interface AvailableImages {
 
 interface CreateProps {
     title: string;
-    availableImages?: AvailableImages; // Images grouped by folder
+    availableImages?: AvailableImages;
+}
+
+// ─────────────────────────────────────────────────────────
+// HELPER: Format angka ke Rupiah
+// Contoh: 175000 → "Rp 175.000"
+// ─────────────────────────────────────────────────────────
+function formatRupiah(angka: number): string {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(angka);
 }
 
 export default function Create({ title, availableImages = {} }: CreateProps) {
@@ -59,9 +66,20 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
         image_file: '',
     });
 
+    // ── Hitung total harga (harga satuan × stok)
+    // Tampil hanya jika kedua nilai > 0
+    const totalHargaBeli =
+        Number(data.purchase_price) > 0 && Number(data.stock) > 0
+            ? Number(data.purchase_price) * Number(data.stock)
+            : null;
+
+    const totalHargaJual =
+        Number(data.selling_price) > 0 && Number(data.stock) > 0
+            ? Number(data.selling_price) * Number(data.stock)
+            : null;
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-
         setFileError('');
 
         if (!file) {
@@ -71,7 +89,6 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
             return;
         }
 
-        // Validate file type
         const allowedTypes = [
             'image/jpeg',
             'image/jpg',
@@ -87,8 +104,7 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
             return;
         }
 
-        // Validate file size (max 2MB)
-        const maxSize = 2 * 1024 * 1024; // 2MB
+        const maxSize = 2 * 1024 * 1024;
 
         if (file.size > maxSize) {
             setFileError('Ukuran gambar maksimal 2MB');
@@ -98,16 +114,11 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
             return;
         }
 
-        // Create preview URL
         const reader = new FileReader();
-        reader.onloadend = () => {
-            setPreviewUrl(reader.result as string);
-        };
+        reader.onloadend = () => setPreviewUrl(reader.result as string);
         reader.readAsDataURL(file);
-
-        // Set form data
         setData('image', file);
-        setData('image_file', ''); // Clear preset selection when upload new
+        setData('image_file', '');
     };
 
     const handlePresetImageChange = (
@@ -117,7 +128,6 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
         setData('image_file', imagePath);
 
         if (imagePath) {
-            // Clear file input and show public/images preview path
             setData('image', null);
             setPreviewUrl(`/images/${imagePath}`);
             setFileError('');
@@ -126,7 +136,7 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
         }
     };
 
-    const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         post(route('products.store'));
     };
@@ -135,7 +145,7 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={title} />
             <div className="px-4 py-6">
-                <form action="" onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit}>
                     <div className="flex flex-row items-center justify-between">
                         <label className="text-2xl font-semibold">
                             {title}
@@ -150,142 +160,224 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                         Silahkan isi formulir di bawah untuk menambah stok baru.
                     </p>
 
-                    {/* Form Anda akan ada di sini nantinya */}
                     <FieldGroup className="mt-6 grid grid-cols-1 gap-8 rounded-xl border bg-card p-6 md:grid-cols-2">
-                        {/* KOLOM KIRI: Data Produk */}
+                        {/* ── KOLOM KIRI: Data Produk ── */}
                         <div className="space-y-4">
-                            <div>
-                                {/* Nama Produk */}
+                            {/* Nama Produk */}
+                            <Field>
+                                <FieldLabel htmlFor="product_name">
+                                    Nama Produk
+                                </FieldLabel>
+                                <FieldContent>
+                                    <input
+                                        id="product_name"
+                                        type="text"
+                                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                                        placeholder="Nama Produk"
+                                        value={data.product_name}
+                                        onChange={(e) =>
+                                            setData(
+                                                'product_name',
+                                                e.target.value,
+                                            )
+                                        }
+                                        required
+                                    />
+                                    {errors.product_name && (
+                                        <p className="mt-1 text-xs text-destructive">
+                                            {errors.product_name}
+                                        </p>
+                                    )}
+                                </FieldContent>
+                            </Field>
+
+                            {/* Harga Beli & Harga Jual */}
+                            <div className="grid grid-cols-2 gap-4">
                                 <Field>
-                                    <FieldLabel htmlFor="product_name">
-                                        Nama Produk
+                                    <FieldLabel htmlFor="purchase_price">
+                                        Harga Beli (per unit)
                                     </FieldLabel>
                                     <FieldContent>
                                         <input
-                                            id="product_name"
-                                            type="text"
-                                            className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                            placeholder="Nama Produk"
-                                            value={data.product_name}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'product_name',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            required
-                                        />
-                                        {errors.product_name && (
-                                            <p className="mt-1 text-xs text-destructive">
-                                                {errors.product_name}
-                                            </p>
-                                        )}
-                                    </FieldContent>
-                                </Field>
-
-                                <div className="mt-3 grid grid-cols-2 gap-4">
-                                    <Field>
-                                        <FieldLabel htmlFor="purchase_price">
-                                            Harga Beli
-                                        </FieldLabel>
-                                        <FieldContent>
-                                            <input
-                                                id="purchase_price"
-                                                type="number"
-                                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                                placeholder="Harga Beli"
-                                                value={data.purchase_price}
-                                                onFocus={(e) =>
-                                                    e.target.select()
-                                                }
-                                                onChange={(e) => {
-                                                    const value =
-                                                        e.target.value;
-                                                    setData(
-                                                        'purchase_price',
-                                                        value === ''
-                                                            ? ''
-                                                            : Number(value),
-                                                    );
-                                                }}
-                                                required
-                                            />
-                                            {errors.purchase_price && (
-                                                <p className="mt-1 text-xs text-destructive">
-                                                    {errors.purchase_price}
-                                                </p>
-                                            )}
-                                        </FieldContent>
-                                    </Field>
-                                    <Field>
-                                        <FieldLabel htmlFor="selling_price">
-                                            Harga Jual
-                                        </FieldLabel>
-                                        <FieldContent>
-                                            <input
-                                                id="selling_price"
-                                                type="number"
-                                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                                placeholder="Harga Jual"
-                                                value={data.selling_price}
-                                                onFocus={(e) =>
-                                                    e.target.select()
-                                                }
-                                                onChange={(e) => {
-                                                    const value =
-                                                        e.target.value;
-                                                    setData(
-                                                        'selling_price',
-                                                        value === ''
-                                                            ? ''
-                                                            : Number(value),
-                                                    );
-                                                }}
-                                                required
-                                            />
-                                            {errors.selling_price && (
-                                                <p className="mt-1 text-xs text-destructive">
-                                                    {errors.selling_price}
-                                                </p>
-                                            )}
-                                        </FieldContent>
-                                    </Field>
-                                </div>
-
-                                <Field className="mt-3">
-                                    <FieldLabel htmlFor="stock">
-                                        Stok
-                                    </FieldLabel>
-                                    <FieldContent>
-                                        <input
-                                            id="stock"
+                                            id="purchase_price"
                                             type="number"
-                                            className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                            placeholder="Stok"
-                                            value={data.stock}
+                                            className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                                            placeholder="Harga Beli"
+                                            value={data.purchase_price}
                                             onFocus={(e) => e.target.select()}
                                             onChange={(e) => {
-                                                const value = e.target.value;
+                                                const v = e.target.value;
                                                 setData(
-                                                    'stock',
-                                                    value === ''
-                                                        ? ''
-                                                        : Number(value),
+                                                    'purchase_price',
+                                                    v === '' ? '' : Number(v),
                                                 );
                                             }}
                                             required
                                         />
-                                        {errors.stock && (
+                                        {errors.purchase_price && (
                                             <p className="mt-1 text-xs text-destructive">
-                                                {errors.stock}
+                                                {errors.purchase_price}
+                                            </p>
+                                        )}
+                                    </FieldContent>
+                                </Field>
+                                <Field>
+                                    <FieldLabel htmlFor="selling_price">
+                                        Harga Jual (per unit)
+                                    </FieldLabel>
+                                    <FieldContent>
+                                        <input
+                                            id="selling_price"
+                                            type="number"
+                                            className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                                            placeholder="Harga Jual"
+                                            value={data.selling_price}
+                                            onFocus={(e) => e.target.select()}
+                                            onChange={(e) => {
+                                                const v = e.target.value;
+                                                setData(
+                                                    'selling_price',
+                                                    v === '' ? '' : Number(v),
+                                                );
+                                            }}
+                                            required
+                                        />
+                                        {errors.selling_price && (
+                                            <p className="mt-1 text-xs text-destructive">
+                                                {errors.selling_price}
                                             </p>
                                         )}
                                     </FieldContent>
                                 </Field>
                             </div>
 
-                            {/* Tombol Simpan Produk */}
-                            <div className="flex justify-center border-t pt-4 md:col-span-2">
+                            {/* Stok */}
+                            <Field>
+                                <FieldLabel htmlFor="stock">Stok</FieldLabel>
+                                <FieldContent>
+                                    <input
+                                        id="stock"
+                                        type="number"
+                                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                                        placeholder="Stok"
+                                        value={data.stock}
+                                        onFocus={(e) => e.target.select()}
+                                        onChange={(e) => {
+                                            const v = e.target.value;
+                                            setData(
+                                                'stock',
+                                                v === '' ? '' : Number(v),
+                                            );
+                                        }}
+                                        required
+                                    />
+                                    {errors.stock && (
+                                        <p className="mt-1 text-xs text-destructive">
+                                            {errors.stock}
+                                        </p>
+                                    )}
+                                </FieldContent>
+                            </Field>
+
+                            {/* ── TOTAL HARGA (harga × stok) ──
+                                Muncul otomatis jika harga dan stok sudah diisi.
+                                Ini read-only — hanya informasi kalkulasi. */}
+                            {(totalHargaBeli !== null ||
+                                totalHargaJual !== null) && (
+                                <div className="rounded-xl border border-border bg-muted/30 p-4">
+                                    <p className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                        Total Keseluruhan (harga × stok)
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {/* Total Harga Beli */}
+                                        <div>
+                                            <p className="mb-1 text-xs text-muted-foreground">
+                                                Total Harga Beli
+                                            </p>
+                                            <div className="flex h-9 items-center rounded-lg border border-border bg-background px-3">
+                                                <span className="font-mono text-sm font-semibold text-foreground">
+                                                    {totalHargaBeli !== null
+                                                        ? formatRupiah(
+                                                              totalHargaBeli,
+                                                          )
+                                                        : '—'}
+                                                </span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {Number(data.purchase_price) >
+                                                    0 && Number(data.stock) > 0
+                                                    ? `${formatRupiah(Number(data.purchase_price))} × ${data.stock} unit`
+                                                    : ''}
+                                            </p>
+                                        </div>
+
+                                        {/* Total Harga Jual */}
+                                        <div>
+                                            <p className="mb-1 text-xs text-muted-foreground">
+                                                Total Harga Jual
+                                            </p>
+                                            <div className="flex h-9 items-center rounded-lg border border-border bg-background px-3">
+                                                <span className="font-mono text-sm font-semibold text-foreground">
+                                                    {totalHargaJual !== null
+                                                        ? formatRupiah(
+                                                              totalHargaJual,
+                                                          )
+                                                        : '—'}
+                                                </span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {Number(data.selling_price) >
+                                                    0 && Number(data.stock) > 0
+                                                    ? `${formatRupiah(Number(data.selling_price))} × ${data.stock} unit`
+                                                    : ''}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Estimasi keuntungan total */}
+                                    {totalHargaBeli !== null &&
+                                        totalHargaJual !== null &&
+                                        totalHargaBeli > 0 && (
+                                            <div className="mt-3 border-t border-border pt-3">
+                                                <p className="mb-1 text-xs text-muted-foreground">
+                                                    Estimasi Keuntungan Total
+                                                </p>
+                                                <p
+                                                    className={`text-base font-bold ${
+                                                        totalHargaJual -
+                                                            totalHargaBeli >=
+                                                        0
+                                                            ? 'text-green-500'
+                                                            : 'text-destructive'
+                                                    }`}
+                                                >
+                                                    {totalHargaJual -
+                                                        totalHargaBeli >=
+                                                    0
+                                                        ? '+'
+                                                        : ''}
+                                                    {formatRupiah(
+                                                        totalHargaJual -
+                                                            totalHargaBeli,
+                                                    )}
+                                                    <span className="ml-2 text-sm font-normal text-muted-foreground">
+                                                        (
+                                                        {(
+                                                            ((totalHargaJual -
+                                                                totalHargaBeli) /
+                                                                totalHargaBeli) *
+                                                            100
+                                                        ).toFixed(1)}
+                                                        %)
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        )}
+                                </div>
+                            )}
+
+                            {/* Tombol Simpan */}
+                            <div className="flex justify-center border-t pt-4">
                                 <Field className="w-full max-w-sm">
                                     <FieldContent>
                                         <Button
@@ -303,7 +395,6 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                                                     <span>Menyimpan...</span>
                                                 </div>
                                             ) : (
-                                                // Teks ini HANYA muncul jika NOT processing
                                                 'Simpan Produk'
                                             )}
                                         </Button>
@@ -312,9 +403,9 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                             </div>
                         </div>
 
-                        {/* KOLOM KANAN: Upload Gambar */}
+                        {/* ── KOLOM KANAN: Upload Gambar ── */}
                         <div className="space-y-4">
-                            {/* IMAGE PREVIEW SECTION */}
+                            {/* Preview gambar */}
                             <div className="rounded-lg border border-dashed border-gray-300 bg-gray-500 p-3 text-center">
                                 <Label className="mb-3 block text-sm font-semibold">
                                     Gambar Saat Ini
@@ -334,13 +425,13 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                                 )}
                             </div>
 
-                            {/* IMAGE SELECTION SECTION */}
+                            {/* Selector gambar */}
                             <Field>
                                 <FieldLabel className="text-base font-semibold">
                                     Gambar Produk
                                 </FieldLabel>
 
-                                {/* PRESET IMAGES SELECTOR */}
+                                {/* Preset folder */}
                                 <div className="space-y-2">
                                     <Label className="text-sm font-medium text-gray-700">
                                         Pilih dari Folder (public/images):
@@ -379,10 +470,10 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                                     )}
                                 </div>
 
-                                {/* DIVIDER */}
+                                {/* Divider ATAU */}
                                 <div className="relative my-4">
                                     <div className="absolute inset-0 flex items-center">
-                                        <div className="w-full border-t border-gray-300"></div>
+                                        <div className="w-full border-t border-gray-300" />
                                     </div>
                                     <div className="relative flex justify-center text-sm">
                                         <span className="bg-white px-2 text-gray-500">
@@ -391,7 +482,7 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                                     </div>
                                 </div>
 
-                                {/* FILE UPLOAD SECTION */}
+                                {/* Upload file baru */}
                                 <div className="space-y-2">
                                     <Label className="text-sm font-medium text-gray-700">
                                         Upload Gambar Baru:

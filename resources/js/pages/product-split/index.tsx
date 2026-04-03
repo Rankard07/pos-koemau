@@ -1,26 +1,23 @@
-import {
-    Head,
-    Link,
-    // router
-} from '@inertiajs/react';
+// resources/js/pages/product-split/index.tsx
+// Halaman History Pemecahan Produk.
+// Menggunakan CSS variables (bg-card, text-foreground, dll) agar tema otomatis
+// mengikuti light/dark mode app, tidak perlu hardcode bg-gray-900.
+import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
+import { route } from 'ziggy-js';
 
+// ─────────────────────────────────────────────────────────
+// BREADCRUMBS
+// ─────────────────────────────────────────────────────────
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Daftar Produk',
-        href: route('products.index'),
-    },
-    {
-        title: 'Pecah Produk',
-        href: route('product-split.index'),
-    },
+    { title: 'Daftar Produk', href: route('products.index') },
+    { title: 'History Pecah Produk', href: route('product-split.index') },
 ];
 
-interface SplitProps {
-    title: string;
-}
-
+// ─────────────────────────────────────────────────────────
+// TIPE DATA — satu baris di tabel history
+// ─────────────────────────────────────────────────────────
 interface Split {
     id: number;
     tanggal: string;
@@ -32,144 +29,171 @@ interface Split {
     keterangan: string;
 }
 
-export default function Index({
-    title,
-    splits,
-    // pagination,
-}: SplitProps & {
+interface IndexProps {
+    title: string;
     splits: Split[];
-    pagination: any;
-}) {
+}
+
+// ─────────────────────────────────────────────────────────
+// KOMPONEN UTAMA
+// ─────────────────────────────────────────────────────────
+export default function Index({ title, splits }: IndexProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={title} />
 
-            <div className="min-h-screen bg-gray-900 p-6 text-gray-100">
-                <div className="mx-auto max-w-7xl">
-                    {/* Header */}
-                    <div className="mb-8 flex items-center justify-between">
-                        <div>
-                            <h1 className="mb-2 text-3xl font-bold text-blue-400">
-                                History Pemecahan Produk
-                            </h1>
-                            <p className="text-gray-400">
-                                Riwayat semua transaksi pemecahan produk
-                            </p>
-                        </div>
-                        <Link
-                            href={route('product-split.create')}
-                            className="rounded bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700"
-                        >
-                            + Pecah Produk Baru
-                        </Link>
+            <div className="px-4 py-6">
+                {/* ── HEADER ── */}
+                <div className="mb-6 flex items-start justify-between">
+                    <div>
+                        <h1 className="text-2xl font-semibold text-foreground">
+                            {title}
+                        </h1>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Riwayat semua transaksi pemecahan produk.
+                        </p>
                     </div>
 
-                    {/* Table */}
-                    <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-gray-600 bg-gray-700">
-                                    <th className="px-6 py-4 text-left font-semibold text-gray-300">
-                                        Tanggal
-                                    </th>
-                                    <th className="px-6 py-4 text-left font-semibold text-gray-300">
-                                        Produk Induk
-                                    </th>
-                                    <th className="px-6 py-4 text-center font-semibold text-gray-300">
-                                        Stok -
-                                    </th>
-                                    <th className="px-6 py-4 text-left font-semibold text-gray-300">
-                                        Produk Hasil
-                                    </th>
-                                    <th className="px-6 py-4 text-center font-semibold text-gray-300">
-                                        Stok +
-                                    </th>
-                                    <th className="px-6 py-4 text-left font-semibold text-gray-300">
-                                        Keterangan
-                                    </th>
-                                    <th className="px-6 py-4 text-center font-semibold text-gray-300">
-                                        Aksi
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {splits.length === 0 ? (
-                                    <tr>
-                                        <td
-                                            colSpan={7}
-                                            className="px-6 py-8 text-center text-gray-400"
+                    {/* Tombol buat pemecahan baru */}
+                    <Link
+                        href={route('product-split.create')}
+                        className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/80"
+                    >
+                        + Pecah Produk Baru
+                    </Link>
+                </div>
+
+                <hr className="mb-6 border-border" />
+
+                {/* ── TABEL HISTORY ── */}
+                <div className="overflow-hidden rounded-xl border border-border">
+                    <table className="w-full border-collapse">
+                        {/* Header kolom */}
+                        <thead>
+                            <tr className="border-b border-border bg-muted/60">
+                                <th className="border-r border-border px-4 py-3 text-left text-sm font-semibold text-foreground">
+                                    Tanggal
+                                </th>
+                                <th className="border-r border-border px-4 py-3 text-left text-sm font-semibold text-foreground">
+                                    Produk Induk
+                                </th>
+                                <th className="border-r border-border px-4 py-3 text-center text-sm font-semibold text-foreground">
+                                    Stok&nbsp;−
+                                </th>
+                                <th className="border-r border-border px-4 py-3 text-left text-sm font-semibold text-foreground">
+                                    Produk Hasil
+                                </th>
+                                <th className="border-r border-border px-4 py-3 text-center text-sm font-semibold text-foreground">
+                                    Stok&nbsp;+
+                                </th>
+                                <th className="border-r border-border px-4 py-3 text-left text-sm font-semibold text-foreground">
+                                    Keterangan
+                                </th>
+                                <th className="px-4 py-3 text-center text-sm font-semibold text-foreground">
+                                    Aksi
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {/* ── Pesan kosong jika belum ada data ── */}
+                            {splits.length === 0 ? (
+                                <tr>
+                                    <td
+                                        colSpan={7}
+                                        className="px-4 py-10 text-center text-sm text-muted-foreground"
+                                    >
+                                        Belum ada riwayat pemecahan produk.{' '}
+                                        <Link
+                                            href={route('product-split.create')}
+                                            className="text-primary underline"
                                         >
-                                            Belum ada riwayat pemecahan produk
+                                            Buat yang pertama.
+                                        </Link>
+                                    </td>
+                                </tr>
+                            ) : (
+                                /* ── Baris data ── */
+                                splits.map((split, index) => (
+                                    <tr
+                                        key={split.id}
+                                        className={`border-b border-border transition-colors hover:bg-muted/30 ${
+                                            index % 2 === 0
+                                                ? 'bg-card'
+                                                : 'bg-muted/10'
+                                        }`}
+                                    >
+                                        {/* Tanggal + waktu relatif */}
+                                        <td className="border-r border-border px-4 py-3">
+                                            <p className="text-sm font-medium text-foreground">
+                                                {split.tanggal}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {split.waktu_lalu}
+                                            </p>
+                                        </td>
+
+                                        {/* Produk induk */}
+                                        <td className="border-r border-border px-4 py-3 text-sm font-medium text-foreground">
+                                            {split.produk_induk}
+                                        </td>
+
+                                        {/* Stok berkurang — merah */}
+                                        <td className="border-r border-border px-4 py-3 text-center">
+                                            <span className="inline-flex items-center rounded-full bg-destructive/15 px-3 py-0.5 text-sm font-bold text-destructive">
+                                                −{split.stok_berkurang}
+                                            </span>
+                                        </td>
+
+                                        {/* Nama produk hasil */}
+                                        <td className="border-r border-border px-4 py-3 text-sm text-muted-foreground">
+                                            {split.produk_hasil}
+                                        </td>
+
+                                        {/* Stok bertambah — hijau */}
+                                        <td className="border-r border-border px-4 py-3 text-center">
+                                            <span className="inline-flex items-center rounded-full bg-green-500/15 px-3 py-0.5 text-sm font-bold text-green-500">
+                                                +{split.stok_bertambah}
+                                            </span>
+                                        </td>
+
+                                        {/* Keterangan */}
+                                        <td className="border-r border-border px-4 py-3 text-sm text-muted-foreground">
+                                            <span
+                                                className="line-clamp-1"
+                                                title={split.keterangan}
+                                            >
+                                                {split.keterangan}
+                                            </span>
+                                        </td>
+
+                                        {/* Tombol detail */}
+                                        <td className="px-4 py-3 text-center">
+                                            <Link
+                                                href={route(
+                                                    'product-split.show',
+                                                    split.id,
+                                                )}
+                                                className="inline-flex items-center gap-1 rounded-full border border-primary/40 px-3 py-1 text-xs font-medium text-primary transition hover:bg-primary/10"
+                                            >
+                                                👁 Detail
+                                            </Link>
                                         </td>
                                     </tr>
-                                ) : (
-                                    splits.map((split) => (
-                                        <tr
-                                            key={split.id}
-                                            className="border-b border-gray-700 transition hover:bg-gray-700/50"
-                                        >
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm">
-                                                    <p className="font-medium text-white">
-                                                        {split.tanggal}
-                                                    </p>
-                                                    <p className="text-xs text-gray-400">
-                                                        {split.waktu_lalu}
-                                                    </p>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className="font-medium text-white">
-                                                    {split.produk_induk}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className="rounded bg-red-900/30 px-3 py-1 text-sm font-bold text-red-400">
-                                                    -{split.stok_berkurang}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <p className="line-clamp-2 text-sm text-gray-300">
-                                                    {split.produk_hasil}
-                                                </p>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className="rounded bg-green-900/30 px-3 py-1 text-sm font-bold text-green-400">
-                                                    +{split.stok_bertambah}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <p className="truncate text-sm text-gray-400">
-                                                    {split.keterangan}
-                                                </p>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <Link
-                                                    href={route(
-                                                        'product-split.show',
-                                                        split.id,
-                                                    )}
-                                                    className="inline-block rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-                                                >
-                                                    Detail
-                                                </Link>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
 
-                    {/* Back Button */}
-                    <div className="mt-8">
-                        <Link
-                            href={route('products.index')}
-                            className="inline-block rounded bg-gray-600 px-6 py-3 font-medium text-white transition hover:bg-gray-700"
-                        >
-                            ← Kembali ke Produk
-                        </Link>
-                    </div>
+                {/* ── Tombol kembali ── */}
+                <div className="mt-6">
+                    <Link
+                        href={route('products.index')}
+                        className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted"
+                    >
+                        ← Kembali ke Produk
+                    </Link>
                 </div>
             </div>
         </AppLayout>

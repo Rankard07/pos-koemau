@@ -1,5 +1,15 @@
-import { Link } from '@inertiajs/react';
+// resources/js/pages/product-split/show.tsx
+// Halaman Detail satu transaksi pemecahan produk.
+// Sebelumnya tidak punya AppLayout — sekarang ditambahkan agar tampil
+// dengan sidebar dan header yang konsisten dengan halaman lain.
+import { Head, Link } from '@inertiajs/react';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
+import { route } from 'ziggy-js';
 
+// ─────────────────────────────────────────────────────────
+// TIPE DATA
+// ─────────────────────────────────────────────────────────
 interface ProductResult {
     id: number;
     product_name: string;
@@ -31,96 +41,117 @@ interface StockSummary {
     stok_akhir: number;
 }
 
-export default function Show({
-    split,
-    stockSummary,
-}: {
+interface ShowProps {
     split: SplitData;
     stockSummary: StockSummary[];
-}) {
+}
+
+// ─────────────────────────────────────────────────────────
+// HELPER: Format Rupiah
+// ─────────────────────────────────────────────────────────
+function formatRupiah(angka: number): string {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(angka);
+}
+
+// ─────────────────────────────────────────────────────────
+// KOMPONEN UTAMA
+// ─────────────────────────────────────────────────────────
+export default function Show({ split, stockSummary }: ShowProps) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Daftar Produk', href: route('products.index') },
+        { title: 'History Pecah Produk', href: route('product-split.index') },
+        {
+            title: `Detail #${split.id}`,
+            href: route('product-split.show', split.id),
+        },
+    ];
+
     return (
-        <div className="min-h-screen bg-gray-900 p-6 text-gray-100">
-            <div className="mx-auto max-w-5xl">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="mb-2 text-3xl font-bold text-blue-400">
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title={`Detail Pemecahan #${split.id}`} />
+
+            <div className="px-4 py-6">
+                {/* ── HEADER ── */}
+                <div className="mb-6">
+                    <h1 className="text-2xl font-semibold text-foreground">
                         Detail Pemecahan Produk
                     </h1>
-                    <p className="text-gray-400">ID Pemecahan: #{split.id}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        ID Transaksi: #{split.id}
+                    </p>
                 </div>
 
-                {/* Metadata */}
-                <div className="mb-8 rounded-lg border border-gray-700 bg-gray-800 p-6">
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <p className="text-sm text-gray-400">
-                                Tanggal Pemecahan
+                <hr className="mb-6 border-border" />
+
+                {/* ── METADATA: Tanggal dan waktu ── */}
+                <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    {[
+                        { label: 'Tanggal', value: split.tanggal_pemecahan },
+                        { label: 'Waktu', value: split.waktu_pemecahan },
+                        {
+                            label: 'Dilakukan',
+                            value: split.waktu_lalu,
+                        },
+                    ].map(({ label, value }) => (
+                        <div
+                            key={label}
+                            className="rounded-xl border border-border bg-card p-4"
+                        >
+                            <p className="mb-1 text-xs text-muted-foreground">
+                                {label}
                             </p>
-                            <p className="text-lg font-bold text-white">
-                                {split.tanggal_pemecahan}
+                            <p className="text-sm font-semibold text-foreground">
+                                {value}
                             </p>
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-400">Waktu</p>
-                            <p className="text-lg font-bold text-white">
-                                {split.waktu_pemecahan}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-400">Waktu Lalu</p>
-                            <p className="text-lg font-bold text-white">
-                                {split.waktu_lalu}
-                            </p>
-                        </div>
-                    </div>
+                    ))}
                 </div>
 
-                {/* Produk Induk (Dikurangi) */}
-                <div className="mb-8 rounded-lg border border-red-700/30 bg-gray-800 p-6">
-                    <h2 className="mb-4 text-xl font-bold text-red-400">
-                        Produk Induk (Dikurangi)
+                {/* ── PRODUK INDUK (dikurangi) ── */}
+                <div className="mb-5 rounded-xl border border-destructive/30 bg-card p-5">
+                    <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-destructive">
+                        <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-xs">
+                            DIKURANGI
+                        </span>
+                        Produk Induk
                     </h2>
-                    <div className="flex gap-6">
+
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                        {/* Gambar produk (jika ada) */}
                         {split.produk_induk.image && (
                             <img
-                                /* src={
-                                    `/storage/${split.produk_induk.image}` ||
-                                    '/images/no-image.png'
-                                } */
-                                src={
-                                    split.produk_induk.image ??
-                                    '/images/no-image.png'
-                                }
+                                src={`/storage/${split.produk_induk.image}`}
                                 alt={split.produk_induk.product_name}
-                                className="h-32 w-32 rounded object-cover"
+                                className="h-28 w-28 rounded-xl object-cover"
                             />
                         )}
+
                         <div className="flex-1">
-                            <p className="mb-1 text-sm text-gray-400">
-                                Nama Produk
-                            </p>
-                            <p className="mb-4 text-2xl font-bold text-white">
+                            <p className="mb-3 text-xl font-bold text-foreground">
                                 {split.produk_induk.product_name}
                             </p>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <p className="text-sm text-gray-400">
+                                    <p className="text-xs text-muted-foreground">
                                         Harga Jual
                                     </p>
-                                    <p className="text-lg font-bold text-blue-400">
-                                        Rp
-                                        {split.produk_induk.harga_jual.toLocaleString(
-                                            'id-ID',
+                                    <p className="text-base font-semibold text-blue-400">
+                                        {formatRupiah(
+                                            split.produk_induk.harga_jual,
                                         )}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-400">
+                                    <p className="text-xs text-muted-foreground">
                                         Stok Berkurang
                                     </p>
-                                    <p className="text-3xl font-bold text-red-400">
-                                        -{split.produk_induk.stok_berkurang}
+                                    <p className="text-2xl font-bold text-destructive">
+                                        −{split.produk_induk.stok_berkurang}
                                     </p>
                                 </div>
                             </div>
@@ -128,55 +159,52 @@ export default function Show({
                     </div>
                 </div>
 
-                {/* Produk Hasil (Bertambah) */}
-                <div className="mb-8 rounded-lg border border-green-700/30 bg-gray-800 p-6">
-                    <h2 className="mb-4 text-xl font-bold text-green-400">
-                        Produk Hasil (Bertambah)
+                {/* ── PRODUK HASIL (bertambah) ── */}
+                <div className="mb-5 rounded-xl border border-green-500/30 bg-card p-5">
+                    <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-green-500">
+                        <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-xs">
+                            BERTAMBAH
+                        </span>
+                        Produk Hasil
                     </h2>
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+
+                    {/* Grid produk hasil — maksimal 2 kolom */}
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {split.produk_hasil.map((item) => (
                             <div
                                 key={item.id}
-                                className="rounded border border-gray-600 bg-gray-700 p-4"
+                                className="flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-4"
                             >
-                                {item.image && (
+                                {/* Gambar produk hasil */}
+                                {item.image ? (
                                     <img
-                                        /* src={
-                                            `/storage/${item.image}` ||
-                                            '/images/no-image.png'
-                                        } */
-                                        src={
-                                            split.produk_induk.image ??
-                                            '/images/no-image.png'
-                                        }
+                                        src={`/storage/${item.image}`}
                                         alt={item.product_name}
-                                        className="mb-3 h-32 w-full rounded object-cover"
+                                        className="h-16 w-16 rounded-lg object-cover"
                                     />
+                                ) : (
+                                    <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted text-xs text-muted-foreground">
+                                        No img
+                                    </div>
                                 )}
-                                <p className="mb-1 text-sm text-gray-400">
-                                    Nama Produk
-                                </p>
-                                <p className="mb-3 text-lg font-bold text-white">
-                                    {item.product_name}
-                                </p>
 
-                                <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-gray-400">
+                                <div className="flex-1">
+                                    <p className="mb-2 text-sm font-semibold text-foreground">
+                                        {item.product_name}
+                                    </p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-muted-foreground">
                                             Harga Jual
                                         </span>
-                                        <span className="font-bold text-blue-400">
-                                            Rp
-                                            {item.harga_jual.toLocaleString(
-                                                'id-ID',
-                                            )}
+                                        <span className="text-sm font-medium text-blue-400">
+                                            {formatRupiah(item.harga_jual)}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between border-t border-gray-600 pt-2">
-                                        <span className="text-sm text-gray-400">
+                                    <div className="mt-1 flex items-center justify-between">
+                                        <span className="text-xs text-muted-foreground">
                                             Stok Bertambah
                                         </span>
-                                        <span className="text-2xl font-bold text-green-400">
+                                        <span className="text-xl font-bold text-green-500">
                                             +{item.stok_bertambah}
                                         </span>
                                     </div>
@@ -186,36 +214,36 @@ export default function Show({
                     </div>
                 </div>
 
-                {/* Catatan */}
+                {/* ── CATATAN (jika ada) ── */}
                 {split.note && (
-                    <div className="mb-8 rounded-lg border border-gray-700 bg-gray-800 p-6">
-                        <h3 className="mb-2 text-lg font-bold text-gray-300">
+                    <div className="mb-5 rounded-xl border border-border bg-card p-4">
+                        <p className="mb-1 text-xs font-medium text-muted-foreground">
                             Catatan
-                        </h3>
-                        <p className="text-gray-300">{split.note}</p>
+                        </p>
+                        <p className="text-sm text-foreground">{split.note}</p>
                     </div>
                 )}
 
-                {/* Stock Summary Table */}
-                <div className="mb-8 overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
-                    <div className="border-b border-gray-700 p-6">
-                        <h3 className="text-lg font-bold text-gray-300">
+                {/* ── RINGKASAN PERUBAHAN STOK ── */}
+                <div className="mb-6 overflow-hidden rounded-xl border border-border">
+                    <div className="border-b border-border bg-muted/60 px-4 py-3">
+                        <h3 className="text-sm font-semibold text-foreground">
                             Ringkasan Perubahan Stok
                         </h3>
                     </div>
-                    <table className="w-full">
+                    <table className="w-full border-collapse">
                         <thead>
-                            <tr className="border-b border-gray-600 bg-gray-700">
-                                <th className="px-6 py-3 text-left font-semibold text-gray-300">
+                            <tr className="border-b border-border bg-muted/30">
+                                <th className="border-r border-border px-4 py-2 text-left text-xs font-semibold text-muted-foreground">
                                     Nama Produk
                                 </th>
-                                <th className="px-6 py-3 text-center font-semibold text-gray-300">
+                                <th className="border-r border-border px-4 py-2 text-center text-xs font-semibold text-muted-foreground">
                                     Stok Awal
                                 </th>
-                                <th className="px-6 py-3 text-center font-semibold text-gray-300">
+                                <th className="border-r border-border px-4 py-2 text-center text-xs font-semibold text-muted-foreground">
                                     Perubahan
                                 </th>
-                                <th className="px-6 py-3 text-center font-semibold text-gray-300">
+                                <th className="px-4 py-2 text-center text-xs font-semibold text-muted-foreground">
                                     Stok Akhir
                                 </th>
                             </tr>
@@ -224,26 +252,30 @@ export default function Show({
                             {stockSummary.map((row, idx) => (
                                 <tr
                                     key={idx}
-                                    className="border-b border-gray-700 transition hover:bg-gray-700/50"
+                                    className={`border-b border-border ${
+                                        idx % 2 === 0
+                                            ? 'bg-card'
+                                            : 'bg-muted/10'
+                                    }`}
                                 >
-                                    <td className="px-6 py-4 font-medium text-white">
+                                    <td className="border-r border-border px-4 py-3 text-sm font-medium text-foreground">
                                         {row.product_name}
                                     </td>
-                                    <td className="px-6 py-4 text-center text-gray-300">
+                                    <td className="border-r border-border px-4 py-3 text-center text-sm text-muted-foreground">
                                         {row.stok_awal}
                                     </td>
-                                    <td className="px-6 py-4 text-center">
+                                    <td className="border-r border-border px-4 py-3 text-center">
                                         <span
-                                            className={
+                                            className={`text-sm font-bold ${
                                                 row.perubahan.startsWith('+')
-                                                    ? 'font-bold text-green-400'
-                                                    : 'font-bold text-red-400'
-                                            }
+                                                    ? 'text-green-500'
+                                                    : 'text-destructive'
+                                            }`}
                                         >
                                             {row.perubahan}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-center font-bold text-white">
+                                    <td className="px-4 py-3 text-center text-sm font-bold text-foreground">
                                         {row.stok_akhir}
                                     </td>
                                 </tr>
@@ -252,22 +284,22 @@ export default function Show({
                     </table>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-4">
+                {/* ── TOMBOL AKSI ── */}
+                <div className="flex gap-3">
                     <Link
                         href={route('product-split.index')}
-                        className="flex-1 rounded bg-gray-600 px-6 py-3 text-center font-medium text-white transition hover:bg-gray-700"
+                        className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted"
                     >
                         ← Kembali ke History
                     </Link>
                     <Link
                         href={route('products.index')}
-                        className="flex-1 rounded bg-blue-600 px-6 py-3 text-center font-medium text-white transition hover:bg-blue-700"
+                        className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/80"
                     >
                         Lihat Semua Produk
                     </Link>
                 </div>
             </div>
-        </div>
+        </AppLayout>
     );
 }

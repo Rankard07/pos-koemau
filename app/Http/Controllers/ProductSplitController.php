@@ -1,4 +1,11 @@
 <?php
+// app/Http/Controllers/ProductSplitController.php
+// SALIN SELURUH isi file ini dan ganti file yang lama.
+//
+// Perubahan dari versi sebelumnya:
+// - Method store() sekarang menggunakan $validated['qty_from'] untuk
+//   mengurangi stok produk induk, bukan lagi sum dari semua result quantities.
+// - Method create() menerima ?product_id dari URL untuk pre-fill form.
 
 namespace App\Http\Controllers;
 
@@ -6,66 +13,74 @@ use App\Http\Requests\StoreProductSplitRequest;
 use App\Models\Product;
 use App\Models\ProductSplit;
 use App\Models\ProductSplitItem;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ProductSplitController extends Controller
 {
     /**
-     * Display a listing of product splits (history)
+     * History semua transaksi pemecahan produk.
      */
     public function index()
     {
-        // Fetch all splits with eager loaded relationships, sorted by latest first
         $splitsPaginated = ProductSplit::query()
             ->with(['parentProduct', 'splitItems.resultProduct'])
             ->latest('created_at')
             ->paginate(15);
 
-        // Get pagination links before mapping (map converts Paginator to Collection)
-        // $pagination = $splitsPaginated->getLinks();
-
-        // Format splits for display
         $formattedSplits = $splitsPaginated->map(function ($split) {
             return [
-                'id' => $split->id,
-                'tanggal' => $split->created_at->format('d/m/Y H:i'),
-                'waktu_lalu' => $split->created_at->diffForHumans(),
-                'produk_induk' => $split->parentProduct->product_name,
-                'stok_berkurang' => $split->parentProduct->stock + collect($split->splitItems)->sum('quantity'),
-                'produk_hasil' => $split->splitItems->map(fn($item) => $item->resultProduct->product_name)->join(', '),
-                'stok_bertambah' => collect($split->splitItems)->sum('quantity'),
-                'keterangan' => $split->note ?? '-',
+                'id'             => $split->id,
+                'tanggal'        => $split->created_at->format('d/m/Y H:i'),
+                'waktu_lalu'     => $split->created_at->diffForHumans(),
+                'produk_induk'   => $split->parentProduct->product_name,
+                // stok_berkurang sekarang disimpan di kolom qty_from di product_splits
+                'stok_berkurang' => $split->qty_from,
+                'produk_hasil'   => $split->splitItems
+                    ->map(fn($item) => $item->resultProduct->product_name)
+                    ->join(', '),
+                'stok_bertambah' => $split->splitItems->sum('quantity'),
+                'keterangan'     => $split->note ?? '-',
             ];
         });
 
         return Inertia::render('product-split/index', [
-            'title' => 'History Pecah Produk',
+            'title'  => 'History Pecah Produk',
             'splits' => $formattedSplits,
-            // 'pagination' => $pagination,
         ]);
     }
 
     /**
-     * Show the form for creating a new product split
+     * Form membuat pemecahan produk baru.
+     * Menerima ?product_id=X untuk pre-fill produk induk (dari tombol Pecah).
      */
     public function create()
     {
-        // Get all products for dropdown (exclude very small stock products as optional)
         $products = Product::query()
             ->select('id', 'product_name', 'stock', 'selling_price')
-            ->where('stock', '>', 0)
+            // ->where('stock', '>', 0)
             ->get();
 
+        $selectedProductId = request()->integer('product_id', 0);
+        $selectedProduct   = $selectedProductId > 0
+            ? Product::select('id', 'product_name', 'stock', 'selling_price')->find($selectedProductId)
+            : null;
+
         return Inertia::render('product-split/create', [
-            'products' => $products,
-            'title' => 'Pecah Produk',
+            'products'        => $products,
+            'title'           => 'Pecah Produk',
+            'selectedProduct' => $selectedProduct,
         ]);
     }
 
     /**
-     * Store a newly created product split in storage
+     * Simpan transaksi pemecahan produk.
+     *
+     * LOGIKA STOK:
+     * - Produk induk berkurang sebesar qty_from (bukan sum of split_items.quantity)
+     * - Setiap produk hasil bertambah sesuai quantity-nya masing-masing
+     * Contoh: 1 Dimsum 100 (qty_from=1) → 1 Dimsum 50 + 2 Dimsum 25
+     * Dimsum 100: -1, Dimsum 50: +1, Dimsum 25: +2
      */
     public function store(StoreProductSplitRequest $request)
     {
@@ -74,34 +89,32 @@ class ProductSplitController extends Controller
         try {
             DB::beginTransaction();
 
-            // Create ProductSplit record
+            // Buat record ProductSplit (termasuk qty_from)
             $split = ProductSplit::create([
                 'product_id_from' => $validated['product_id_from'],
-                'note' => $validated['note'] ?? null,
+                'qty_from'        => $validated['qty_from'],
+                'note'            => $validated['note'] ?? null,
             ]);
 
-            // Get parent product to update stock
+            // Ambil produk induk
             $parentProduct = Product::findOrFail($validated['product_id_from']);
-            $totalSplitQty = 0;
 
-            // Create ProductSplitItem records and collect result product IDs
+            // Proses setiap produk hasil
             foreach ($validated['split_items'] as $item) {
                 ProductSplitItem::create([
                     'product_split_id' => $split->id,
-                    'product_id_to' => $item['product_id_to'],
-                    'quantity' => $item['quantity'],
-                    'selling_price' => $item['selling_price'],
+                    'product_id_to'    => $item['product_id_to'],
+                    'quantity'         => $item['quantity'],
+                    // Gunakan harga jual produk hasil yang sudah ada di DB
+                    'selling_price'    => Product::find($item['product_id_to'])->selling_price ?? 0,
                 ]);
 
-                $totalSplitQty += $item['quantity'];
-
-                // Update result product stock
-                $resultProduct = Product::findOrFail($item['product_id_to']);
-                $resultProduct->increment('stock', $item['quantity']);
+                // Tambah stok produk hasil
+                Product::findOrFail($item['product_id_to'])->increment('stock', $item['quantity']);
             }
 
-            // Update parent product stock (decrease)
-            $parentProduct->decrement('stock', $totalSplitQty);
+            // Kurangi stok produk induk sebesar qty_from (BUKAN sum of result quantities)
+            $parentProduct->decrement('stock', $validated['qty_from']);
 
             DB::commit();
 
@@ -112,66 +125,67 @@ class ProductSplitController extends Controller
 
             return back()
                 ->withInput()
-                ->withErrors(['message' => 'Terjadi kesalahan saat memecah produk: ' . $e->getMessage()]);
+                ->withErrors(['message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
     }
 
     /**
-     * Display the specified product split detail
+     * Detail satu transaksi pemecahan.
      */
     public function show(ProductSplit $productSplit)
     {
-        // Eager load relationships
         $split = $productSplit->load(['parentProduct', 'splitItems.resultProduct']);
 
-        // Format data for frontend
+        // qty_from: berapa unit induk yang berkurang (disimpan di tabel product_splits)
+        $qtyFrom = $split->qty_from ?? $split->splitItems->sum('quantity');
+
         $formattedData = [
-            'id' => $split->id,
+            'id'                => $split->id,
             'tanggal_pemecahan' => $split->created_at->format('d F Y'),
-            'waktu_pemecahan' => $split->created_at->format('H:i:s'),
-            'waktu_lalu' => $split->created_at->diffForHumans(),
-            'produk_induk' => [
-                'id' => $split->parentProduct->id,
-                'product_name' => $split->parentProduct->product_name,
-                'harga_jual' => $split->parentProduct->selling_price,
-                'image' => $split->parentProduct->image,
-                'stok_berkurang' => collect($split->splitItems)->sum('quantity'),
+            'waktu_pemecahan'   => $split->created_at->format('H:i:s'),
+            'waktu_lalu'        => $split->created_at->diffForHumans(),
+            'produk_induk'      => [
+                'id'            => $split->parentProduct->id,
+                'product_name'  => $split->parentProduct->product_name,
+                'harga_jual'    => $split->parentProduct->selling_price,
+                'image'         => $split->parentProduct->image,
+                'stok_berkurang' => $qtyFrom,
             ],
             'produk_hasil' => $split->splitItems->map(function ($item) {
                 return [
-                    'id' => $item->resultProduct->id,
-                    'product_name' => $item->resultProduct->product_name,
-                    'harga_jual' => $item->selling_price,
-                    'image' => $item->resultProduct->image,
+                    'id'            => $item->resultProduct->id,
+                    'product_name'  => $item->resultProduct->product_name,
+                    'harga_jual'    => $item->selling_price,
+                    'image'         => $item->resultProduct->image,
                     'stok_bertambah' => $item->quantity,
                 ];
             })->toArray(),
             'note' => $split->note,
         ];
 
-        // Build stock change summary
+        // Tabel ringkasan perubahan stok
         $stockSummary = [];
 
-        // Add parent product
+        // Baris produk induk
         $stockSummary[] = [
             'product_name' => $split->parentProduct->product_name,
-            'stok_awal' => $split->parentProduct->stock + collect($split->splitItems)->sum('quantity'),
-            'perubahan' => '-' . collect($split->splitItems)->sum('quantity'),
-            'stok_akhir' => $split->parentProduct->stock,
+            'stok_awal'    => $split->parentProduct->stock + $qtyFrom,
+            'perubahan'    => '-' . $qtyFrom,
+            'stok_akhir'   => $split->parentProduct->stock,
         ];
 
-        // Add result products
+        // Baris setiap produk hasil
         foreach ($split->splitItems as $item) {
             $stockSummary[] = [
                 'product_name' => $item->resultProduct->product_name,
-                'stok_awal' => $item->resultProduct->stock - $item->quantity,
-                'perubahan' => '+' . $item->quantity,
-                'stok_akhir' => $item->resultProduct->stock,
+                'stok_awal'    => $item->resultProduct->stock - $item->quantity,
+                'perubahan'    => '+' . $item->quantity,
+                'stok_akhir'   => $item->resultProduct->stock,
             ];
         }
 
         return Inertia::render('product-split/show', [
-            'split' => $formattedData,
+            'split'        => $formattedData,
             'stockSummary' => $stockSummary,
         ]);
     }

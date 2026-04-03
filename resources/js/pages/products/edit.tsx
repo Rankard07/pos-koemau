@@ -38,6 +38,18 @@ interface EditProps {
     availableImages?: AvailableImages;
 }
 
+// ─────────────────────────────────────────────────────────
+// HELPER: Format angka ke Rupiah
+// Contoh: 175000 → "Rp 175.000"
+// ─────────────────────────────────────────────────────────
+function formatRupiah(angka: number): string {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(angka);
+}
+
 export default function Edit({
     title,
     product,
@@ -74,6 +86,18 @@ export default function Edit({
             href: route('products.edit', product.id),
         },
     ];
+
+    // ── Hitung total harga (harga satuan × stok)
+    // Tampil hanya jika kedua nilai > 0
+    const totalHargaBeli =
+        Number(data.purchase_price) > 0 && Number(data.stock) > 0
+            ? Number(data.purchase_price) * Number(data.stock)
+            : null;
+
+    const totalHargaJual =
+        Number(data.selling_price) > 0 && Number(data.stock) > 0
+            ? Number(data.selling_price) * Number(data.stock)
+            : null;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -297,6 +321,108 @@ export default function Edit({
                                         )}
                                     </FieldContent>
                                 </Field>
+
+                                {/* ── TOTAL HARGA (harga × stok) ──
+                                Muncul otomatis jika harga dan stok sudah diisi.
+                                Ini read-only — hanya informasi kalkulasi. */}
+                                {(totalHargaBeli !== null ||
+                                    totalHargaJual !== null) && (
+                                    <div className="rounded-xl border border-border bg-muted/30 p-4">
+                                        <p className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                            Total Keseluruhan (harga × stok)
+                                        </p>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {/* Total Harga Beli */}
+                                            <div>
+                                                <p className="mb-1 text-xs text-muted-foreground">
+                                                    Total Harga Beli
+                                                </p>
+                                                <div className="flex h-9 items-center rounded-lg border border-border bg-background px-3">
+                                                    <span className="font-mono text-sm font-semibold text-foreground">
+                                                        {totalHargaBeli !== null
+                                                            ? formatRupiah(
+                                                                  totalHargaBeli,
+                                                              )
+                                                            : '—'}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                    {Number(
+                                                        data.purchase_price,
+                                                    ) > 0 &&
+                                                    Number(data.stock) > 0
+                                                        ? `${formatRupiah(Number(data.purchase_price))} × ${data.stock} unit`
+                                                        : ''}
+                                                </p>
+                                            </div>
+
+                                            {/* Total Harga Jual */}
+                                            <div>
+                                                <p className="mb-1 text-xs text-muted-foreground">
+                                                    Total Harga Jual
+                                                </p>
+                                                <div className="flex h-9 items-center rounded-lg border border-border bg-background px-3">
+                                                    <span className="font-mono text-sm font-semibold text-foreground">
+                                                        {totalHargaJual !== null
+                                                            ? formatRupiah(
+                                                                  totalHargaJual,
+                                                              )
+                                                            : '—'}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                    {Number(
+                                                        data.selling_price,
+                                                    ) > 0 &&
+                                                    Number(data.stock) > 0
+                                                        ? `${formatRupiah(Number(data.selling_price))} × ${data.stock} unit`
+                                                        : ''}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Estimasi keuntungan total */}
+                                        {totalHargaBeli !== null &&
+                                            totalHargaJual !== null &&
+                                            totalHargaBeli > 0 && (
+                                                <div className="mt-3 border-t border-border pt-3">
+                                                    <p className="mb-1 text-xs text-muted-foreground">
+                                                        Estimasi Keuntungan
+                                                        Total
+                                                    </p>
+                                                    <p
+                                                        className={`text-base font-bold ${
+                                                            totalHargaJual -
+                                                                totalHargaBeli >=
+                                                            0
+                                                                ? 'text-green-500'
+                                                                : 'text-destructive'
+                                                        }`}
+                                                    >
+                                                        {totalHargaJual -
+                                                            totalHargaBeli >=
+                                                        0
+                                                            ? '+'
+                                                            : ''}
+                                                        {formatRupiah(
+                                                            totalHargaJual -
+                                                                totalHargaBeli,
+                                                        )}
+                                                        <span className="ml-2 text-sm font-normal text-muted-foreground">
+                                                            (
+                                                            {(
+                                                                ((totalHargaJual -
+                                                                    totalHargaBeli) /
+                                                                    totalHargaBeli) *
+                                                                100
+                                                            ).toFixed(1)}
+                                                            %)
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Tombol Simpan Produk */}
