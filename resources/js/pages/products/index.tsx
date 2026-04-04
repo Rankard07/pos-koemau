@@ -1,6 +1,6 @@
 // resources/js/pages/products/index.tsx
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Edit2, Trash2, Zap, History } from 'lucide-react';
+import { Plus, Edit2, Trash2, Split, History } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
@@ -114,7 +114,7 @@ export default function Index({ title, products }: IndexProps) {
                         <Button asChild variant="koemau">
                             <Link href={route('products.create')} prefetch>
                                 <Plus className="mr-1 h-4 w-4" />
-                                Tambah Produk
+                                Beli Produk
                             </Link>
                         </Button>
 
@@ -271,15 +271,18 @@ export default function Index({ title, products }: IndexProps) {
                                                 </div>
                                             </td>
 
-                                            {/* Stok — merah jika ≤5, oranye jika ≤10 */}
+                                            {/* Stok — merah jika ≤3, oranye jika ≤10 */}
                                             <td className="border-r border-border px-4 py-3 text-center">
                                                 <span
                                                     className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${
                                                         product.stock === 0
                                                             ? 'bg-red-500/15 text-red-500'
-                                                            : product.stock <= 5
+                                                            : product.stock <= 3
                                                               ? 'bg-orange-500/15 text-orange-500'
-                                                              : 'bg-foreground/5 text-foreground'
+                                                              : product.stock >=
+                                                                  5
+                                                                ? 'bg-green-500/15 text-green-500'
+                                                                : 'bg-foreground/5 text-foreground'
                                                     }`}
                                                 >
                                                     {product.stock}
@@ -335,7 +338,7 @@ export default function Index({ title, products }: IndexProps) {
                                                                     )}
                                                                     prefetch
                                                                 >
-                                                                    <Zap className="h-3.5 w-3.5" />
+                                                                    <Split className="h-3.5 w-3.5" />
                                                                     Pecah
                                                                 </Link>
                                                             </Button>
@@ -351,7 +354,7 @@ export default function Index({ title, products }: IndexProps) {
                                                                 className="pointer-events-none gap-1 opacity-50"
                                                                 disabled
                                                             >
-                                                                <Zap className="h-3.5 w-3.5" />
+                                                                <Split className="h-3.5 w-3.5" />
                                                                 Pecah
                                                             </Button>
                                                         </span>

@@ -212,7 +212,7 @@ export default function Dashboard({
                         <AlertTriangle className="h-4 w-4 shrink-0" />
                         <span>
                             <strong>{stokMenipis} produk</strong> stoknya hampir
-                            habis (≤ 5 pcs).{' '}
+                            habis (≤ 3 pcs).{' '}
                             <Link
                                 href={route('products.index')}
                                 className="underline hover:no-underline"
