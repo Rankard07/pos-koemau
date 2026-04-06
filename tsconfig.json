@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "ignoreDeprecations": "6.0" /* Suppress reporting of deprecated APIs. */,
         /* Visit https://aka.ms/tsconfig to read more about this file */
 
         /* Projects */
