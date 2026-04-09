@@ -17,7 +17,7 @@ import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Daftar Produk', href: route('products.index') },
-    { title: 'Tambah Produk', href: route('products.create') },
+    { title: 'Beli Produk', href: route('products.create') },
 ];
 
 interface ImageOption {
@@ -157,7 +157,7 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                         </Button>
                     </div>
                     <p className="text-muted-foreground">
-                        Silahkan isi formulir di bawah untuk menambah stok baru.
+                        Silahkan isi formulir di bawah untuk membeli stok baru dari produsen/supplier.
                     </p>
 
                     <FieldGroup className="mt-6 grid grid-cols-1 gap-8 rounded-xl border bg-card p-6 md:grid-cols-2">
@@ -395,7 +395,7 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                                                     <span>Menyimpan...</span>
                                                 </div>
                                             ) : (
-                                                'Simpan Produk'
+                                                'Simpan Pembelian Produk'
                                             )}
                                         </Button>
                                     </FieldContent>

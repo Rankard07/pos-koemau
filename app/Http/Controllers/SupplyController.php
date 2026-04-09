@@ -29,21 +29,24 @@ class SupplyController extends Controller
 
         // Format data supaya lebih mudah dibaca di frontend
         $formattedSupplies = $supplies->map(function ($supply) {
+            $source = $supply->note === 'Auto dari + Beli Produk' ? 'Produk' : 'Supply Manual';
+
             return [
-                'id'             => $supply->id,
-                'tanggal'        => $supply->supply_date->format('d M Y'),
-                'waktu_lalu'     => $supply->created_at->diffForHumans(),
-                'supplier_name'  => $supply->supplier_name,
-                'product_name'   => $supply->product->product_name,
-                'quantity'       => $supply->quantity,
+                'id' => $supply->id,
+                'tanggal' => $supply->supply_date->format('d M Y'),
+                'waktu_lalu' => $supply->created_at->diffForHumans(),
+                'supplier_name' => $supply->supplier_name,
+                'product_name' => $supply->product->product_name,
+                'quantity' => $supply->quantity,
                 'purchase_price' => (float) $supply->purchase_price,
-                'total_amount'   => (float) $supply->total_amount,
-                'note'           => $supply->note ?? '-',
+                'total_amount' => (float) $supply->total_amount,
+                'note' => $supply->note ?? '-',
+                'source' => $source,
             ];
         });
 
         return Inertia::render('supply/index', [
-            'title'    => 'History Supply',
+            'title' => 'History Supply',
             'supplies' => $formattedSupplies,
         ]);
     }
@@ -55,7 +58,7 @@ class SupplyController extends Controller
     public function create(): Response
     {
         return Inertia::render('supply/create', [
-            'title'    => 'Catat Supply Baru',
+            'title' => 'Catat Supply Baru',
             // Kirim hanya kolom yang dibutuhkan form — hemat bandwidth
             'products' => Product::query()
                 ->orderBy('product_name')
@@ -95,15 +98,15 @@ class SupplyController extends Controller
                 $productName = $supply->product->product_name;
                 Expense::create([
                     'description' => "Supply {$productName} dari {$validated['supplier_name']}",
-                    'amount'      => $validated['total_amount'],
-                    'date'        => $validated['supply_date'],
-                    'category'    => 'pembelian_stok',
+                    'amount' => $validated['total_amount'],
+                    'date' => $validated['supply_date'],
+                    'category' => 'pembelian_stok',
                 ]);
             });
         } catch (\Exception $e) {
             return back()
                 ->withInput()
-                ->withErrors(['message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+                ->withErrors(['message' => 'Terjadi kesalahan: '.$e->getMessage()]);
         }
 
         return redirect()->route('supply.index')
@@ -120,15 +123,15 @@ class SupplyController extends Controller
 
         return Inertia::render('supply/show', [
             'supply' => [
-                'id'             => $supply->id,
-                'tanggal'        => $supply->supply_date->format('d F Y'),
-                'waktu_lalu'     => $supply->created_at->diffForHumans(),
-                'supplier_name'  => $supply->supplier_name,
-                'product'        => $supply->product,
-                'quantity'       => $supply->quantity,
+                'id' => $supply->id,
+                'tanggal' => $supply->supply_date->format('d F Y'),
+                'waktu_lalu' => $supply->created_at->diffForHumans(),
+                'supplier_name' => $supply->supplier_name,
+                'product' => $supply->product,
+                'quantity' => $supply->quantity,
                 'purchase_price' => (float) $supply->purchase_price,
-                'total_amount'   => (float) $supply->total_amount,
-                'note'           => $supply->note,
+                'total_amount' => (float) $supply->total_amount,
+                'note' => $supply->note,
             ],
         ]);
     }

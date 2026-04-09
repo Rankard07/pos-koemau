@@ -139,7 +139,7 @@ export default function Index({ title, products }: IndexProps) {
                 <div className="overflow-hidden rounded-xl border border-border">
                     {products.length === 0 ? (
                         <div className="p-12 text-center text-muted-foreground">
-                            Belum ada produk. Klik "Tambah Produk" untuk membuat
+                            Belum ada produk. Klik "Beli Produk" untuk membuat
                             yang baru.
                         </div>
                     ) : (

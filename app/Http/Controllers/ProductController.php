@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Storage;
+use App\Models\Expense;
+use App\Models\Product;
+use App\Models\Supply;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class ProductController extends Controller
 {
@@ -33,7 +36,7 @@ class ProductController extends Controller
         $folders = ['Cireng', 'Dimsum', 'Katsu', 'Nugget', 'Risol-Corndog', 'Siomay'];
 
         foreach ($folders as $folder) {
-            $folderPath = $imagePath . '/' . $folder;
+            $folderPath = $imagePath.'/'.$folder;
             $imagesByFolder[$folder] = [];
 
             if (File::isDirectory($folderPath)) {
@@ -42,7 +45,7 @@ class ProductController extends Controller
                     $extension = strtolower($file->getExtension());
                     if (in_array($extension, ['jpg', 'jpeg', 'png', 'webp'])) {
                         $imagesByFolder[$folder][] = [
-                            'path' => $folder . '/' . $file->getFilename(),
+                            'path' => $folder.'/'.$file->getFilename(),
                             'name' => $file->getFilename(),
                         ];
                     }
@@ -52,7 +55,7 @@ class ProductController extends Controller
         }
 
         // Remove empty folders
-        $imagesByFolder = array_filter($imagesByFolder, fn($images) => !empty($images));
+        $imagesByFolder = array_filter($imagesByFolder, fn ($images) => ! empty($images));
 
         return response()->json($imagesByFolder);
     }
@@ -65,7 +68,7 @@ class ProductController extends Controller
         $availableImages = $this->getAvailableImagesForView();
 
         return Inertia::render('products/create', [
-            'title' => 'Tambah Produk Baru',
+            'title' => 'Beli Produk Baru',
             'availableImages' => $availableImages,
         ]);
     }
@@ -77,34 +80,59 @@ class ProductController extends Controller
     {
         $validated = $request->validated();
 
-        // Priority 1: Upload new image file
-        if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('products', 'public');
-        }
-        // Priority 2: Select image from public/images folder
-        elseif ($request->filled('image_file')) {
-            $imagePath = $request->input('image_file');
+        DB::transaction(function () use ($request, &$validated): void {
+            // Priority 1: Upload new image file
+            if ($request->hasFile('image')) {
+                $validated['image'] = $request->file('image')->store('products', 'public');
+            }
+            // Priority 2: Select image from public/images folder
+            elseif ($request->filled('image_file')) {
+                $imagePath = $request->input('image_file');
 
-            // Security: Validate path to prevent directory traversal
-            if ($this->isValidImagePath($imagePath)) {
-                $sourceFile = public_path('images/' . $imagePath);
-                if (File::exists($sourceFile)) {
-                    $fileName = basename($imagePath);
-                    $destinationDir = storage_path('app/public/products');
+                // Security: Validate path to prevent directory traversal
+                if ($this->isValidImagePath($imagePath)) {
+                    $sourceFile = public_path('images/'.$imagePath);
+                    if (File::exists($sourceFile)) {
+                        $fileName = basename($imagePath);
+                        $destinationDir = storage_path('app/public/products');
 
-                    // Create directory if not exists
-                    if (!File::exists($destinationDir)) {
-                        File::makeDirectory($destinationDir, 0755, true);
+                        // Create directory if not exists
+                        if (! File::exists($destinationDir)) {
+                            File::makeDirectory($destinationDir, 0755, true);
+                        }
+
+                        $destination = $destinationDir.'/'.$fileName;
+                        File::copy($sourceFile, $destination);
+                        $validated['image'] = 'products/'.$fileName;
                     }
-
-                    $destination = $destinationDir . '/' . $fileName;
-                    File::copy($sourceFile, $destination);
-                    $validated['image'] = 'products/' . $fileName;
                 }
             }
-        }
 
-        Product::create($validated);
+            $product = Product::create($validated);
+
+            $initialStock = (int) $product->stock;
+            $purchasePrice = (float) $product->purchase_price;
+            $totalAmount = $initialStock * $purchasePrice;
+
+            if ($initialStock > 0 && $purchasePrice >= 0) {
+                Supply::create([
+                    'supplier_name' => 'Input Produk',
+                    'product_id' => $product->id,
+                    'quantity' => $initialStock,
+                    'purchase_price' => $purchasePrice,
+                    'total_amount' => $totalAmount,
+                    'supply_date' => now()->toDateString(),
+                    'note' => 'Auto dari + Beli Produk',
+                ]);
+
+                Expense::create([
+                    'description' => "Supply awal {$product->product_name} dari + Beli Produk",
+                    'amount' => $totalAmount,
+                    'date' => now()->toDateString(),
+                    'category' => 'pembelian_stok',
+                ]);
+            }
+        });
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan');
     }
@@ -150,7 +178,7 @@ class ProductController extends Controller
 
             // Security: Validate path
             if ($this->isValidImagePath($imagePath)) {
-                $sourceFile = public_path('images/' . $imagePath);
+                $sourceFile = public_path('images/'.$imagePath);
                 if (File::exists($sourceFile)) {
                     // Delete old image if exists
                     $this->deleteImageFile($product->image);
@@ -158,13 +186,13 @@ class ProductController extends Controller
                     $fileName = basename($imagePath);
                     $destinationDir = storage_path('app/public/products');
 
-                    if (!File::exists($destinationDir)) {
+                    if (! File::exists($destinationDir)) {
                         File::makeDirectory($destinationDir, 0755, true);
                     }
 
-                    $destination = $destinationDir . '/' . $fileName;
+                    $destination = $destinationDir.'/'.$fileName;
                     File::copy($sourceFile, $destination);
-                    $validated['image'] = 'products/' . $fileName;
+                    $validated['image'] = 'products/'.$fileName;
                 }
             }
         }
@@ -183,11 +211,20 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
-        // Delete image file from storage
-        $this->deleteImageFile($product->image);
+        DB::transaction(function () use ($product): void {
+            // Hapus supply otomatis yang dibuat dari alur + Beli Produk.
+            // Ini mencegah pelanggaran FK saat produk baru dihapus.
+            Supply::query()
+                ->where('product_id', $product->id)
+                ->where('note', 'Auto dari + Beli Produk')
+                ->delete();
 
-        // Delete product record
-        $product->delete();
+            // Delete image file from storage
+            $this->deleteImageFile($product->image);
+
+            // Delete product record
+            $product->delete();
+        });
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus');
     }
@@ -197,7 +234,7 @@ class ProductController extends Controller
      */
     private function deleteImageFile(?string $imagePath): void
     {
-        if (!empty($imagePath) && Storage::disk('public')->exists($imagePath)) {
+        if (! empty($imagePath) && Storage::disk('public')->exists($imagePath)) {
             Storage::disk('public')->delete($imagePath);
         }
     }
@@ -208,6 +245,7 @@ class ProductController extends Controller
     private function isValidImagePath(string $path): bool
     {
         $pattern = '/^(Cireng|Dimsum|Katsu|Nugget|Risol-Corndog|Siomay)\/[\w\s\(\)\-\.\[\]]+\.(jpg|jpeg|png|webp)$/i';
+
         return preg_match($pattern, $path) === 1;
     }
 
@@ -221,7 +259,7 @@ class ProductController extends Controller
         $folders = ['Cireng', 'Dimsum', 'Katsu', 'Nugget', 'Risol-Corndog', 'Siomay'];
 
         foreach ($folders as $folder) {
-            $folderPath = $imagePath . '/' . $folder;
+            $folderPath = $imagePath.'/'.$folder;
             $imagesByFolder[$folder] = [];
 
             if (File::isDirectory($folderPath)) {
@@ -230,7 +268,7 @@ class ProductController extends Controller
                     $extension = strtolower($file->getExtension());
                     if (in_array($extension, ['jpg', 'jpeg', 'png', 'webp'])) {
                         $imagesByFolder[$folder][] = [
-                            'path' => $folder . '/' . $file->getFilename(),
+                            'path' => $folder.'/'.$file->getFilename(),
                             'name' => $file->getFilename(),
                         ];
                     }

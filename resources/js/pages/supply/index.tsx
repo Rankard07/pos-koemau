@@ -27,6 +27,7 @@ interface Supply {
     purchase_price: number;
     total_amount: number;
     note: string;
+    source: string;
 }
 
 interface IndexProps {
@@ -72,8 +73,8 @@ export default function Index({ title, supplies }: IndexProps) {
                             {title}
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Catatan semua pembelian stok produk dari supplier.
-                            Setiap baris = satu nota pembelian.
+                            Histori nota/bon pembelian stok dari produsen atau supplier.
+                            Setiap baris = satu transaksi pembelian stok.
                         </p>
                     </div>
 
@@ -104,6 +105,9 @@ export default function Index({ title, supplies }: IndexProps) {
                                     Produk
                                 </th>
                                 <th className="border-r border-border px-4 py-3 text-center text-sm font-semibold text-foreground">
+                                    Sumber
+                                </th>
+                                <th className="border-r border-border px-4 py-3 text-center text-sm font-semibold text-foreground">
                                     Qty
                                 </th>
                                 <th className="border-r border-border px-4 py-3 text-right text-sm font-semibold text-foreground">
@@ -123,7 +127,7 @@ export default function Index({ title, supplies }: IndexProps) {
                             {supplies.length === 0 ? (
                                 <tr>
                                     <td
-                                        colSpan={7}
+                                        colSpan={8}
                                         className="px-4 py-16 text-center"
                                     >
                                         <div className="flex flex-col items-center gap-3">
@@ -173,6 +177,19 @@ export default function Index({ title, supplies }: IndexProps) {
                                             <p className="text-sm text-foreground">
                                                 {supply.product_name}
                                             </p>
+                                        </td>
+
+                                        {/* Jumlah beli — dengan badge biru */}
+                                        <td className="border-r border-border px-4 py-3 text-center">
+                                            <span
+                                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                                    supply.source === 'Produk'
+                                                        ? 'bg-violet-500/15 text-violet-500'
+                                                        : 'bg-cyan-500/15 text-cyan-500'
+                                                }`}
+                                            >
+                                                {supply.source}
+                                            </span>
                                         </td>
 
                                         {/* Jumlah beli — dengan badge biru */}
