@@ -52,8 +52,14 @@ function formatRupiah(angka: number): string {
 // BREADCRUMBS
 // ─────────────────────────────────────────────────────────
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Daftar Produk', href: route('products.index') },
-    { title: 'Pecah Produk', href: route('product-split.create') },
+    {
+        title: 'Daftar Produk',
+        href: route('products.index'),
+    },
+    {
+        title: 'Pecah Produk',
+        href: route('product-split.create')
+    },
 ];
 
 // ─────────────────────────────────────────────────────────
