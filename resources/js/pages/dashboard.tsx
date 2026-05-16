@@ -6,6 +6,16 @@ import {
     AlertTriangle,
     ShoppingCart,
 } from 'lucide-react';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+} from 'recharts';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { route } from 'ziggy-js';
@@ -104,65 +114,53 @@ function SummaryCard({
 // ─────────────────────────────────────────────────────────────
 
 function SimpleBarChart({ data }: { data: ChartItem[] }) {
-    // Cari nilai terbesar dari semua data untuk menentukan skala bar
-    const maxValue = Math.max(
-        ...data.map((d) => Math.max(d.pemasukan, d.pengeluaran)),
-        1, // hindari pembagian dengan 0 jika semua data kosong
+    const emptyData = data.every(
+        (d) => d.pemasukan === 0 && d.pengeluaran === 0,
     );
 
     return (
-        <div className="space-y-3">
-            {/* Legend */}
-            <div className="flex gap-4 text-sm">
-                <div className="flex items-center gap-1.5">
-                    <div className="h-3 w-3 rounded-sm bg-green-500" />
-                    <span className="text-muted-foreground">Pemasukan</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <div className="h-3 w-3 rounded-sm bg-red-400" />
-                    <span className="text-muted-foreground">Pengeluaran</span>
-                </div>
-            </div>
-
-            {/* Bar Groups */}
-            <div className="flex h-40 items-end gap-3">
-                {data.map((item) => (
-                    <div
-                        key={item.bulan}
-                        className="flex flex-1 flex-col items-center gap-1"
-                    >
-                        {/* Dua bar: hijau (pemasukan) dan merah (pengeluaran) */}
-                        <div className="flex h-32 w-full items-end justify-center gap-0.5">
-                            {/* Bar Pemasukan */}
-                            <div
-                                className="min-h-[2px] flex-1 rounded-t-sm bg-green-500 transition-all duration-500"
-                                style={{
-                                    height: `${(item.pemasukan / maxValue) * 100}%`,
-                                }}
-                                title={`Pemasukan: ${formatRupiah(item.pemasukan)}`}
-                            />
-                            {/* Bar Pengeluaran */}
-                            <div
-                                className="min-h-[2px] flex-1 rounded-t-sm bg-red-400 transition-all duration-500"
-                                style={{
-                                    height: `${(item.pengeluaran / maxValue) * 100}%`,
-                                }}
-                                title={`Pengeluaran: ${formatRupiah(item.pengeluaran)}`}
-                            />
-                        </div>
-                        {/* Label bulan di bawah bar */}
-                        <span className="text-center text-xs leading-tight text-muted-foreground">
-                            {item.bulan}
-                        </span>
-                    </div>
-                ))}
-            </div>
-
-            {/* Catatan jika semua data masih 0 */}
-            {maxValue === 1 && (
-                <p className="py-2 text-center text-sm text-muted-foreground">
+        <div>
+            {emptyData ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">
                     Belum ada data pemasukan & pengeluaran
                 </p>
+            ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={data}>
+                        <CartesianGrid
+                            strokeDasharray="3 3"
+                            className="stroke-border"
+                        />
+                        <XAxis dataKey="bulan" className="text-xs" />
+                        <YAxis className="text-xs" />
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: 'hsl(var(--background))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '0.5rem',
+                                color: 'hsl(var(--foreground))',
+                            }}
+                            formatter={(value) =>
+                                new Intl.NumberFormat('id-ID', {
+                                    style: 'currency',
+                                    currency: 'IDR',
+                                    minimumFractionDigits: 0,
+                                }).format(value as number)
+                            }
+                        />
+                        <Legend />
+                        <Bar
+                            dataKey="pemasukan"
+                            name="Pemasukan"
+                            fill="#22c55e"
+                        />
+                        <Bar
+                            dataKey="pengeluaran"
+                            name="Pengeluaran"
+                            fill="#ef4444"
+                        />
+                    </BarChart>
+                </ResponsiveContainer>
             )}
         </div>
     );

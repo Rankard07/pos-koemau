@@ -51,8 +51,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Supply, Pengeluaran, Pemasukan
     Route::resource('supply', SupplyController::class);
+
+    // Expenses with bulk delete & reset
     Route::resource('expenses', ExpenseController::class);
+    Route::post('expenses/bulk-delete', [ExpenseController::class, 'bulkDelete'])->name('expenses.bulkDelete');
+    Route::post('expenses/reset', [ExpenseController::class, 'reset'])->name('expenses.reset');
+
+    // Income with bulk delete & reset
     Route::resource('income', IncomeController::class);
+    Route::post('income/bulk-delete', [IncomeController::class, 'bulkDelete'])->name('income.bulkDelete');
+    Route::post('income/reset', [IncomeController::class, 'reset'])->name('income.reset');
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

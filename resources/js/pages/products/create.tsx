@@ -157,7 +157,8 @@ export default function Create({ title, availableImages = {} }: CreateProps) {
                         </Button>
                     </div>
                     <p className="text-muted-foreground">
-                        Silahkan isi formulir di bawah untuk membeli stok baru dari produsen/supplier.
+                        Silahkan isi formulir di bawah untuk membeli stok baru
+                        dari produsen/supplier.
                     </p>
 
                     <FieldGroup className="mt-6 grid grid-cols-1 gap-8 rounded-xl border bg-card p-6 md:grid-cols-2">
